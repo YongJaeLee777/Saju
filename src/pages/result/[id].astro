@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm'
 import { createDb } from '../../db/client'
 import { sajuProfiles } from '../../db/schema'
 import { calculateSaju } from '../../lib/saju/calculator'
+import { countSurfaceElements } from '../../lib/saju/analyzer/elements'
 
 const { id } = Astro.params
 
@@ -64,6 +65,7 @@ const calculation = calculateSaju({
 })
 
 const pillarKeys = ['year', 'month', 'day', 'hour'] as const
+const surfaceElementCounts = countSurfaceElements(calculation.elements)
 ---
 
 <html lang="ko">
@@ -158,6 +160,17 @@ const pillarKeys = ['year', 'month', 'day', 'hour'] as const
             <tr><th scope="row">천간 오행</th>{pillarKeys.map((key) => <td>{calculation.elements[key]?.stem ?? '모름'}</td>)}</tr>
             <tr><th scope="row">지지 오행</th>{pillarKeys.map((key) => <td>{calculation.elements[key]?.branch ?? '모름'}</td>)}</tr>
           </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>표면 오행 분포</h2>
+        <p>천간·지지의 글자 수를 단순 집계한 값이며, 오행의 실제 세기나 강도를 의미하지 않습니다.</p>
+        <p>{calculation.elements.hour === null ? '출생시간을 몰라 시주 2글자를 제외한 총 6글자 기준입니다.' : '년주·월주·일주·시주의 총 8글자 기준입니다.'}</p>
+        <table>
+          <caption>오행별 글자 수</caption>
+          <thead><tr>{Object.keys(surfaceElementCounts).map((element) => <th scope="col">{element}</th>)}</tr></thead>
+          <tbody><tr>{Object.values(surfaceElementCounts).map((count) => <td>{count}개</td>)}</tr></tbody>
         </table>
       </section>
 

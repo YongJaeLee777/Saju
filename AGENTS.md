@@ -388,11 +388,11 @@ Do not collect full street addresses solely for Saju calculation.
 
 ## Test Status
 
-At the handoff point, the Saju calculator test suite had:
+Current calculator and surface-element analyzer test suites:
 
 ```text
-15 tests passing
-1 test file passing
+33 tests passing (22 calculator + 11 analyzer)
+2 test files passing
 ```
 
 Command:
@@ -401,7 +401,7 @@ Command:
 npm run test:run
 ```
 
-The suite currently verifies:
+The original calculation-policy tests verify:
 1. Normal solar-calendar Saju calculation
 2. Birth time missing → hour pillar returned as null by our wrapper
 3. Birth hour changes can change the hour pillar
@@ -460,16 +460,16 @@ They are regression tests for calculation policy.
 
 ---
 
-## Where Development Paused
+## Current Development Status
 
-Development intentionally paused immediately BEFORE:
-
-> expanding the actual Saju data shown to users.
-
-The next planned feature was to expose more normalized Saju data through our own `SajuResult`, starting with:
-1. raw five-element data
-2. ten gods
-3. later luck pillars / other analysis
+Phase A is complete: normalized raw elements and ten gods are displayed.
+Phase B's first step is complete: `src/lib/saju/analyzer/elements.ts` counts
+surface stem/branch elements from `SajuResult.elements`, with 8 total when
+birth time is known and 6 when unknown. The result page labels this as
+"표면 오행 분포" and explains that counts do not measure strength.
+Next: define the scope and methodology of any further analysis before implementing it.
+Hidden stems, weighted strength, percentages, and interpretations remain unimplemented.
+Development history: `docs/SAJU_DEVELOPMENT_LOG.md` (step 36).
 
 Important:
 - Do NOT immediately invent "wood 30%, fire 20%" scoring.
@@ -669,6 +669,8 @@ Continue from this point:
 
 ### Phase A — Saju result model expansion
 
+Status: complete.
+
 1. Inspect current `manseryeok` result types/API in the installed package
 2. Add normalized raw five-element information to our application type
 3. Add tests
@@ -682,6 +684,11 @@ Do not over-interpret yet.
 ### Phase B — Analysis layer
 
 Separate objective base calculations from interpretation.
+
+Completed: surface-element integer counts in `analyzer/elements.ts`, result UI,
+and 11 unit tests. The existing manseryeok wrapper is unchanged.
+Next: agree on the next analysis scope (for example, raw hidden stems) and its
+methodology. Do not automatically add strength scoring or persistence.
 
 Possible modules:
 

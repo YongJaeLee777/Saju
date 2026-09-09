@@ -1,0 +1,116 @@
+---
+---
+
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>내 사주 보기</title>
+  </head>
+
+  <body>
+    <main>
+      <h1>내 사주 보기</h1>
+
+      <form id="saju-form">
+        <div>
+          <label for="birthDate">생년월일</label>
+          <input
+            id="birthDate"
+            name="birthDate"
+            type="date"
+            required
+          />
+        </div>
+
+        <div>
+          <label for="birthTime">태어난 시간</label>
+          <input
+            id="birthTime"
+            name="birthTime"
+            type="time"
+          />
+        </div>
+
+        <div>
+          <label for="gender">성별</label>
+          <select id="gender" name="gender" required>
+            <option value="">선택</option>
+            <option value="male">남성</option>
+            <option value="female">여성</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="calendarType">달력</label>
+          <select id="calendarType" name="calendarType" required>
+            <option value="solar">양력</option>
+            <option value="lunar">음력</option>
+          </select>
+        </div>
+
+        <label>
+          <input
+            type="checkbox"
+            id="isLeapMonth"
+            name="isLeapMonth"
+          />
+          윤달
+        </label>
+
+        <button type="submit">
+          무료 사주 보기
+        </button>
+
+        <p id="error-message"></p>
+      </form>
+    </main>
+
+    <script>
+      const form = document.querySelector('#saju-form')
+      const errorMessage =
+        document.querySelector('#error-message')
+
+      form?.addEventListener('submit', async (event) => {
+        event.preventDefault()
+
+        if (!(form instanceof HTMLFormElement)) {
+          return
+        }
+
+        const formData = new FormData(form)
+
+        const body = {
+          birthDate: formData.get('birthDate'),
+          birthTime: formData.get('birthTime') || null,
+          gender: formData.get('gender'),
+          calendarType: formData.get('calendarType'),
+          isLeapMonth:
+            formData.get('isLeapMonth') === 'on',
+        }
+
+        const response = await fetch('/api/saju/profile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        })
+
+        const result = await response.json()
+
+        if (!response.ok) {
+          if (errorMessage) {
+            errorMessage.textContent =
+              result.message ?? '오류가 발생했습니다.'
+          }
+
+          return
+        }
+
+        window.location.href =
+          `/result/${result.profileId}`
+      })
+    </script>
+  </body>
+</html>

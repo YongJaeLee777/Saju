@@ -1,0 +1,23 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"compatibility_date": "2026-09-08",
+	"compatibility_flags": ["global_fetch_strictly_public"],
+	"name": "saju",
+	"main": "@astrojs/cloudflare/entrypoints/server",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"d1_databases": [
+    {
+      "binding": "saju_db",
+      "database_name": "saju-db",
+      "database_id": "1dce25f1-9095-4758-a7bf-fbce80a74c04",
+      "migrations_dir": "drizzle",
+      "migrations_pattern": "drizzle/*/migration.sql"
+    }
+  ]
+}

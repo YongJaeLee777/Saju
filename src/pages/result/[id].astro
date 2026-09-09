@@ -1,0 +1,161 @@
+```astro
+---
+export const prerender = false
+
+import { env } from 'cloudflare:workers'
+import { eq } from 'drizzle-orm'
+
+import { createDb } from '../../db/client'
+import { sajuProfiles } from '../../db/schema'
+import { calculateSaju } from '../../lib/saju/calculator'
+
+const { id } = Astro.params
+
+if (!id) {
+  return Astro.redirect('/')
+}
+
+const db = createDb(env.saju_db)
+
+const profiles = await db
+  .select({
+    id: sajuProfiles.id,
+    birthDate: sajuProfiles.birthDate,
+    birthTime: sajuProfiles.birthTime,
+    gender: sajuProfiles.gender,
+    calendarType: sajuProfiles.calendarType,
+    isLeapMonth: sajuProfiles.isLeapMonth,
+  })
+  .from(sajuProfiles)
+  .where(eq(sajuProfiles.id, id))
+  .limit(1)
+
+const sajuProfile = profiles[0]
+
+if (!sajuProfile) {
+  return new Response('사주 정보를 찾을 수 없습니다.', {
+    status: 404,
+  })
+}
+
+if (
+  sajuProfile.gender !== 'male' &&
+  sajuProfile.gender !== 'female'
+) {
+  return new Response('잘못된 성별 데이터입니다.', {
+    status: 500,
+  })
+}
+
+if (
+  sajuProfile.calendarType !== 'solar' &&
+  sajuProfile.calendarType !== 'lunar'
+) {
+  return new Response('잘못된 달력 데이터입니다.', {
+    status: 500,
+  })
+}
+
+const calculation = calculateSaju({
+  birthDate: sajuProfile.birthDate,
+  birthTime: sajuProfile.birthTime,
+  gender: sajuProfile.gender,
+  calendarType: sajuProfile.calendarType,
+  isLeapMonth: sajuProfile.isLeapMonth,
+})
+---
+
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>사주 결과</title>
+  </head>
+
+  <body>
+    <main>
+      <h1>사주 정보</h1>
+
+      <section>
+        <h2>입력 정보</h2>
+
+        <dl>
+          <dt>생년월일</dt>
+          <dd>{sajuProfile.birthDate}</dd>
+
+          <dt>태어난 시간</dt>
+          <dd>{sajuProfile.birthTime ?? '모름'}</dd>
+
+          <dt>성별</dt>
+          <dd>
+            {sajuProfile.gender === 'male' ? '남성' : '여성'}
+          </dd>
+
+          <dt>달력</dt>
+          <dd>
+            {sajuProfile.calendarType === 'solar' ? '양력' : '음력'}
+          </dd>
+
+          {
+            sajuProfile.calendarType === 'lunar' && (
+              <>
+                <dt>윤달</dt>
+                <dd>
+                  {sajuProfile.isLeapMonth ? '예' : '아니오'}
+                </dd>
+              </>
+            )
+          }
+        </dl>
+      </section>
+
+      <section>
+        <h2>사주팔자</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>년주</th>
+              <th>월주</th>
+              <th>일주</th>
+              <th>시주</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <th>천간</th>
+              <td>{calculation.year.stem}</td>
+              <td>{calculation.month.stem}</td>
+              <td>{calculation.day.stem}</td>
+              <td>{calculation.hour.stem ?? '-'}</td>
+            </tr>
+
+            <tr>
+              <th>지지</th>
+              <td>{calculation.year.branch}</td>
+              <td>{calculation.month.branch}</td>
+              <td>{calculation.day.branch}</td>
+              <td>{calculation.hour.branch ?? '-'}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>개발 확인용</h2>
+
+        <p>
+          Profile ID:
+          <code>{sajuProfile.id}</code>
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
+```

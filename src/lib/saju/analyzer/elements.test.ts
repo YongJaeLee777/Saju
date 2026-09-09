@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { calculateSaju } from '../calculator'
 import type { FiveElement, SajuResult } from '../types'
 import { countSurfaceElements } from './elements'
+import { buildAnalysisFacts } from './analysis-facts'
 
 const example = {
   birthDate: '1991-01-02',
@@ -50,5 +51,24 @@ describe('countSurfaceElements', () => {
     first.목 = 99
     expect(countSurfaceElements(elements)).toEqual({ 목: 0, 화: 2, 토: 2, 금: 2, 수: 2 })
     expect(elements).toEqual(original)
+  })
+
+  it('대표 사주의 지장간 오행 count와 surface/hidden 존재 여부를 계산한다', () => {
+    const facts = buildAnalysisFacts(calculateSaju(example))
+    expect(facts.hiddenCounts).toEqual({ 목: 1, 화: 2, 토: 3, 금: 1, 수: 2 })
+    expect(facts.presence).toEqual({
+      목: { surface: false, hidden: true },
+      화: { surface: true, hidden: true },
+      토: { surface: true, hidden: true },
+      금: { surface: true, hidden: true },
+      수: { surface: true, hidden: true },
+    })
+  })
+
+  it('출생시간이 없으면 지장간 오행 count에서도 시지를 제외한다', () => {
+    const facts = buildAnalysisFacts(calculateSaju({ ...example, birthTime: null }))
+    expect(facts.hiddenCounts).toEqual({ 목: 0, 화: 1, 토: 2, 금: 1, 수: 2 })
+    expect(Object.values(facts.hiddenCounts).reduce((sum, count) => sum + count, 0)).toBe(6)
+    expect(facts.presence.목).toEqual({ surface: false, hidden: false })
   })
 })

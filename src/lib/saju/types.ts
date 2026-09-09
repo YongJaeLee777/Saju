@@ -12,11 +12,50 @@ export interface SajuInput {
   trueSolarTime?: TrueSolarTimeOption
 }
 export type FiveElement = '목' | '화' | '토' | '금' | '수'
+export type FiveElementCounts = Record<FiveElement, number>
+export type FiveElementPresence = Record<FiveElement, boolean>
+export type Season = '봄' | '여름' | '가을' | '겨울'
+export type MonthCommandRelation = 'same' | 'generatesMe' | 'iGenerate' | 'controlsMe' | 'iControl'
+export interface SeasonalContext {
+  monthBranch: string
+  monthElement: FiveElement
+  season: Season
+  dayStemElement: FiveElement
+  relation: MonthCommandRelation
+}
+export interface AnalysisFacts {
+  surfaceCounts: FiveElementCounts
+  hiddenCounts: FiveElementCounts
+  presence: Record<FiveElement, { surface: boolean; hidden: boolean }>
+}
 export type TenGod = '비견' | '겁재' | '식신' | '상관' | '편재' | '정재' | '편관' | '정관' | '편인' | '정인'
 export interface ElementPair { stem: FiveElement; branch: FiveElement }
 export interface HiddenStem {
   stem: '갑' | '을' | '병' | '정' | '무' | '기' | '경' | '신' | '임' | '계'
   element: FiveElement
+}
+export type HiddenStemRole = 'main' | 'middle' | 'residual'
+export type RootPillar = 'year' | 'month' | 'day' | 'hour'
+export interface RootFinding {
+  pillar: RootPillar
+  branch: string
+  hiddenStem: HiddenStem['stem']
+  role: HiddenStemRole
+}
+export interface RootAnalysis {
+  hasRoot: boolean
+  roots: RootFinding[]
+}
+export interface ExposureFinding {
+  sourcePillar: RootPillar
+  sourceBranch: string
+  hiddenStem: HiddenStem['stem']
+  role: HiddenStemRole
+  exposedPillars: RootPillar[]
+}
+export interface ExposureAnalysis {
+  hasExposure: boolean
+  findings: ExposureFinding[]
 }
 /** 지지는 지장간 본기를 기준으로 계산한다. */
 export interface TenGodPair { stem: TenGod | '일간'; branch: TenGod }

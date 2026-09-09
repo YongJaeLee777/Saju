@@ -16,3 +16,16 @@ export function countSurfaceElements(
 
   return counts
 }
+
+export function countHiddenElements(
+  hiddenStems: SajuResult['hiddenStems'],
+): SurfaceElementCounts {
+  const counts: SurfaceElementCounts = { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0 }
+
+  for (const stems of [hiddenStems.year, hiddenStems.month, hiddenStems.day, hiddenStems.hour]) {
+    if (stems === null) continue
+    for (const { element } of stems) counts[element] += 1
+  }
+
+  return counts
+}

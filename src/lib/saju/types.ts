@@ -25,6 +25,11 @@ export interface ElementPair {
   branch: FiveElement
 }
 
+export interface HiddenStem {
+  stem: '갑' | '을' | '병' | '정' | '무' | '기' | '경' | '신' | '임' | '계'
+  element: FiveElement
+}
+
 /** 지지는 지장간 본기를 기준으로 계산한다. */
 export interface TenGodPair {
   stem: TenGod | '일간'
@@ -38,6 +43,12 @@ export interface Pillar {
 }
 
 export interface SajuResult {
+  hiddenStems: {
+    year: HiddenStem[]
+    month: HiddenStem[]
+    day: HiddenStem[]
+    hour: HiddenStem[] | null
+  }
   /** 각 천간·지지의 오행 매핑. 강약 점수나 가중치가 아니다. */
   elements: {
     year: ElementPair

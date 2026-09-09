@@ -175,6 +175,16 @@ const surfaceElementCounts = countSurfaceElements(calculation.elements)
       </section>
 
       <section>
+        <h2>지장간</h2>
+        <p>각 지지에 포함된 천간과 오행입니다. 본기를 먼저 나열하며, 세기나 가중치를 뜻하지 않습니다.</p>
+        <table>
+          <caption>지지별 지장간</caption>
+          <thead><tr><th scope="col">년지</th><th scope="col">월지</th><th scope="col">일지</th><th scope="col">시지</th></tr></thead>
+          <tbody><tr>{pillarKeys.map((key) => <td>{calculation.hiddenStems[key]?.map(({ stem, element }) => `${stem}(${element})`).join(', ') ?? '출생시간 모름'}</td>)}</tr></tbody>
+        </table>
+      </section>
+
+      <section>
         <h2>십성</h2>
         <p>일간(나를 나타내는 천간)을 기준으로 한 관계입니다. 지지 십성은 지장간의 본기를 기준으로 표시합니다.</p>
         <table>

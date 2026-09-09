@@ -1,5 +1,14 @@
 # AGENTS.md — Saju Project Context
 
+## Current Status / Next Step
+
+* Phase A 완료
+* 표면 오행 단순 집계 완료
+* 지장간 raw data 완료
+* 지장간은 lunar-javascript 표 기반 직접 매핑
+* 관련 테스트 38개 통과
+* 다음 작업: 지장간 정책 검증 후 오행 분석 방법론 결정
+
 ## Purpose
 
 This repository is a Korean Saju (사주/만세력) web service MVP.
@@ -467,8 +476,10 @@ Phase B's first step is complete: `src/lib/saju/analyzer/elements.ts` counts
 surface stem/branch elements from `SajuResult.elements`, with 8 total when
 birth time is known and 6 when unknown. The result page labels this as
 "표면 오행 분포" and explains that counts do not measure strength.
-Next: define the scope and methodology of any further analysis before implementing it.
-Hidden stems, weighted strength, percentages, and interpretations remain unimplemented.
+Hidden-stem raw data is complete, directly mapped from the lunar-javascript table.
+Related tests: 38 passing.
+Next: validate the hidden-stem policy first, then decide the element-analysis methodology before advanced interpretation.
+Weighted strength, percentages, and interpretations remain unimplemented.
 Development history: `docs/SAJU_DEVELOPMENT_LOG.md` (step 36).
 
 Important:
@@ -747,3 +758,18 @@ Avoid:
 - unnecessary user data collection
 
 Only add infrastructure when a real product/traffic requirement justifies it.
+
+## Codex Efficiency Rule
+
+For small changes:
+- inspect only relevant files
+- make minimal changes
+- run targeted tests only
+- do not run full build/check unless explicitly requested
+- batch documentation updates after several completed features
+
+## Project Context Scope
+
+- For ordinary development tasks, use only AGENTS.md as project instructions.
+- `docs/SAJU_DEVELOPMENT_LOG.md` is the user's retrospective document. Read or load it into context only when explicitly requested by the user.
+- For ordinary tasks, inspect only files directly relevant to the user's request.

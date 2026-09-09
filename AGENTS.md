@@ -3,11 +3,16 @@
 ## Current Status / Next Step
 
 * Phase A 완료
-* 표면 오행 단순 집계 완료
-* 지장간 raw data 완료
-* 지장간은 lunar-javascript 표 기반 직접 매핑
-* 관련 테스트 38개 통과
-* 다음 작업: 지장간 정책 검증 후 오행 분석 방법론 결정
+* 표면 오행 count 완료
+* 지장간 오행 count / presence 완료
+* SeasonalContext 완료
+* 일간 ↔ 월지 오행 관계 완료
+* 통근 분석 완료
+* 투간 분석 완료
+* 지장간 배열 순서는 role 의미로 사용하지 않으며 `main/middle/residual` 필드를 기준으로 판단
+* 지장간 UI의 "본기 먼저" 오해 문구 수정 완료
+* 최근 전체 검증: check/typecheck/build 성공, 전체 63 tests 통과
+* 다음 구현 작업: 천간 합(天干合) 관계 분석
 
 ## Purpose
 

@@ -8,6 +8,9 @@ import { createDb } from '../../db/client'
 import { sajuProfiles } from '../../db/schema'
 import { calculateSaju } from '../../lib/saju/calculator'
 import { buildAnalysisFacts } from '../../lib/saju/analyzer/analysis-facts'
+import { getSeasonalContext } from '../../lib/saju/analyzer/seasonal'
+import { analyzeRoots } from '../../lib/saju/analyzer/roots'
+import { analyzeExposure } from '../../lib/saju/analyzer/exposure'
 
 const { id } = Astro.params
 
@@ -66,6 +69,9 @@ const calculation = calculateSaju({
 
 const pillarKeys = ['year', 'month', 'day', 'hour'] as const
 const analysisFacts = buildAnalysisFacts(calculation)
+const seasonalContext = getSeasonalContext(calculation)
+const rootAnalysis = analyzeRoots(calculation)
+const exposureAnalysis = analyzeExposure(calculation)
 ---
 
 <html lang="ko">
@@ -181,7 +187,7 @@ const analysisFacts = buildAnalysisFacts(calculation)
 
       <section>
         <h2>지장간</h2>
-        <p>각 지지에 포함된 천간과 오행입니다. 본기를 먼저 나열하며, 세기나 가중치를 뜻하지 않습니다.</p>
+        <p>각 지지에 포함된 천간과 오행입니다. 표시 순서는 중요도·강도·본기 우선순위를 뜻하지 않습니다.</p>
         <table>
           <caption>지지별 지장간</caption>
           <thead><tr><th scope="col">년지</th><th scope="col">월지</th><th scope="col">일지</th><th scope="col">시지</th></tr></thead>
@@ -202,6 +208,56 @@ const analysisFacts = buildAnalysisFacts(calculation)
         </table>
         {!sajuProfile.birthTime && <p>출생시간을 몰라 시주의 오행과 십성은 표시하지 않습니다. 절기 전환일에는 출생시간에 따라 년주·월주가 달라질 수 있습니다.</p>}
       </section>
+
+      {
+        import.meta.env.DEV && (
+          <section>
+            <h2>개발용 분석 패널</h2>
+            <p>개발 환경에서 현재 분석 엔진의 중간 데이터를 확인하기 위한 패널입니다.</p>
+
+            <dl>
+              <dt>월지</dt>
+              <dd>{seasonalContext.monthBranch}</dd>
+              <dt>계절</dt>
+              <dd>{seasonalContext.season}</dd>
+              <dt>일간 오행</dt>
+              <dd>{seasonalContext.dayStemElement}</dd>
+              <dt>일간 ↔ 월지 관계</dt>
+              <dd>{seasonalContext.relation}</dd>
+              <dt>통근</dt>
+              <dd>{rootAnalysis.hasRoot ? '있음' : '없음'}</dd>
+              <dt>투간</dt>
+              <dd>{exposureAnalysis.hasExposure ? '있음' : '없음'}</dd>
+            </dl>
+
+            <h3>통근 findings</h3>
+            {
+              rootAnalysis.roots.length > 0 ? (
+                <ul>
+                  {rootAnalysis.roots.map((root) => (
+                    <li>{root.pillar} / {root.branch} / {root.hiddenStem} / {root.role}</li>
+                  ))}
+                </ul>
+              ) : <p>없음</p>
+            }
+
+            <h3>투간 findings</h3>
+            {
+              exposureAnalysis.findings.length > 0 ? (
+                <ul>
+                  {exposureAnalysis.findings.map((finding) => (
+                    <li>{finding.sourcePillar} / {finding.sourceBranch} / {finding.hiddenStem} / {finding.role} / {finding.exposedPillars.join(', ')}</li>
+                  ))}
+                </ul>
+              ) : <p>없음</p>
+            }
+
+            <h3>오행 count</h3>
+            <p>표면: {Object.entries(analysisFacts.surfaceCounts).map(([element, count]) => `${element} ${count}`).join(' / ')}</p>
+            <p>지장간: {Object.entries(analysisFacts.hiddenCounts).map(([element, count]) => `${element} ${count}`).join(' / ')}</p>
+          </section>
+        )
+      }
     </main>
   </body>
 </html>

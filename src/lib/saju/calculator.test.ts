@@ -5,6 +5,59 @@ import { getSolarTerm } from 'manseryeok'
 import { getSolarTermsOfYear } from 'manseryeok'
 
 describe('calculateSaju', () => {
+  const example = {
+    birthDate: '1991-01-02',
+    birthTime: '13:04',
+    gender: 'female',
+    calendarType: 'solar',
+    isLeapMonth: false,
+  } as const
+
+  it('경오·무자·임신·정미의 원시 오행을 반환한다', () => {
+    expect(calculateSaju(example).elements).toEqual({
+      year: { stem: '금', branch: '화' },
+      month: { stem: '토', branch: '수' },
+      day: { stem: '수', branch: '금' },
+      hour: { stem: '화', branch: '토' },
+    })
+  })
+
+  it('임 일간 기준 십성을 반환하고 지지는 본기를 사용한다', () => {
+    expect(calculateSaju(example).tenGods).toEqual({
+      year: { stem: '편인', branch: '정재' },
+      month: { stem: '편관', branch: '겁재' },
+      day: { stem: '일간', branch: '편인' },
+      hour: { stem: '정재', branch: '정관' },
+    })
+  })
+
+  it.each([null, undefined, ''])('시간이 %s이면 임시 자시의 오행·십성을 노출하지 않는다', (birthTime) => {
+    const result = calculateSaju({ ...example, birthTime })
+    expect(result.elements.hour).toBeNull()
+    expect(result.tenGods.hour).toBeNull()
+    expect(result.elements.day).toEqual({ stem: '수', branch: '금' })
+    expect(result.tenGods.day).toEqual({ stem: '일간', branch: '편인' })
+  })
+
+  it('자시 정책으로 일간이 바뀌면 십성도 새 일간을 기준으로 계산한다', () => {
+    const midnight = calculateSaju({ ...example, birthTime: '23:30' })
+    const jasi = calculateSaju({ ...example, birthTime: '23:30', dayBoundary: 'jasi' })
+    expect(midnight.tenGods.year.stem).toBe('편인')
+    expect(jasi.day.stem).toBe('계')
+    expect(jasi.tenGods.year.stem).toBe('정인')
+    expect(jasi.elements.day).toEqual({ stem: '수', branch: '금' })
+  })
+
+  it('진태양시 보정으로 바뀐 시주의 오행과 십성을 반환한다', () => {
+    const base = { ...example, birthDate: '1990-05-15', birthTime: '07:05' }
+    const normal = calculateSaju(base)
+    const corrected = calculateSaju({ ...base, trueSolarTime: { longitude: 126.978, applyEquationOfTime: true, applyHistoricalDst: true } })
+    expect(normal.elements.hour).toEqual({ stem: '금', branch: '토' })
+    expect(corrected.elements.hour).toEqual({ stem: '토', branch: '목' })
+    expect(normal.tenGods.hour).toEqual({ stem: '비견', branch: '편인' })
+    expect(corrected.tenGods.hour).toEqual({ stem: '정인', branch: '정재' })
+  })
+
   it('1991-01-02 13:04 여성 양력 사주팔자를 계산한다', () => {
     const result = calculateSaju({
       birthDate: '1991-01-02',

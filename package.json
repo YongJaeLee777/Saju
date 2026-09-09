@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "check": "astro check",
+    "typecheck": "npm run check",
     "preview": "astro build && astro preview",
     "astro": "astro",
     "generate-types": "wrangler types",
@@ -26,8 +28,10 @@
     "esbuild": true
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
     "@types/node": "^26.5.0",
     "drizzle-kit": "^1.0.0-rc.4",
+    "typescript": "^6.0.3",
     "vitest": "^5.0.0",
     "wrangler": "^4.130.0"
   }

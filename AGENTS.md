@@ -486,6 +486,8 @@ The project owner explicitly wants warnings during development about hidden cost
 
 Always call out relevant caveats when changing code.
 
+Security note: miniflare currently pulls sharp@0.35.2 (<0.35.4 vulnerable), but current production Worker does not bundle or execute sharp. Do not introduce untrusted image processing without re-evaluating this dependency.
+
 ### D1 row reads
 
 Cloudflare D1 cost/performance depends on rows read/written.

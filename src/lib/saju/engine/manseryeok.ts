@@ -26,29 +26,32 @@ export function calculateWithManseryeok(
   }
 
   const result = calculateFourPillars({
-  year,
-  month,
-  day,
-  hour,
-  minute,
-
-  isLunar: input.calendarType === 'lunar',
-
-  isLeapMonth:
-    input.calendarType === 'lunar'
-      ? input.isLeapMonth
-      : false,
-
-  gender: input.gender,
-
-  dayBoundary:
-    input.dayBoundary ?? 'midnight',
-
-  trueSolarTime: input.trueSolarTime,
-})
+    year,
+    month,
+    day,
+    hour,
+    minute,
+    isLunar: input.calendarType === 'lunar',
+    isLeapMonth: input.calendarType === 'lunar' ? input.isLeapMonth : false,
+    gender: input.gender,
+    dayBoundary: input.dayBoundary ?? 'midnight',
+    trueSolarTime: input.trueSolarTime,
+  })
 
   const pillars = result.toObject()
   return {
+    elements: {
+      year: { ...result.yearElement },
+      month: { ...result.monthElement },
+      day: { ...result.dayElement },
+      hour: hasBirthTime ? { ...result.hourElement } : null,
+    },
+    tenGods: {
+      year: { ...result.tenGods.year },
+      month: { ...result.tenGods.month },
+      day: { ...result.tenGods.day },
+      hour: hasBirthTime ? { ...result.tenGods.hour } : null,
+    },
     year: {
       stem: result.year.heavenlyStem,
       branch: result.year.earthlyBranch,
@@ -79,5 +82,4 @@ export function calculateWithManseryeok(
           korean: null,
         },
   }
-  
 }

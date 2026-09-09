@@ -99,17 +99,27 @@
 
         const result = await response.json()
 
+        if (typeof result !== 'object' || result === null) {
+          if (errorMessage) errorMessage.textContent = '응답을 확인할 수 없습니다.'
+          return
+        }
+
         if (!response.ok) {
           if (errorMessage) {
             errorMessage.textContent =
-              result.message ?? '오류가 발생했습니다.'
+              'message' in result && typeof result.message === 'string'
+                ? result.message
+                : '오류가 발생했습니다.'
           }
 
           return
         }
 
-        window.location.href =
-          `/result/${result.profileId}`
+        if ('profileId' in result && typeof result.profileId === 'string') {
+          window.location.href = `/result/${encodeURIComponent(result.profileId)}`
+        } else if (errorMessage) {
+          errorMessage.textContent = '사주 결과 주소를 확인할 수 없습니다.'
+        }
       })
     </script>
   </body>

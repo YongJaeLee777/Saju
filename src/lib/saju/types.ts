@@ -27,6 +27,15 @@ export interface AnalysisFacts {
   surfaceCounts: FiveElementCounts
   hiddenCounts: FiveElementCounts
   presence: Record<FiveElement, { surface: boolean; hidden: boolean }>
+  seasonal: SeasonalContext
+  roots: RootAnalysis
+  exposure: ExposureAnalysis
+  stemCombinations: StemCombinationFinding[]
+  branchClashes: BranchClashFinding[]
+  branchCombinations: BranchCombinationFinding[]
+  branchPunishments: BranchPunishmentAnalysis
+  branchBreaks: BranchBreakFinding[]
+  branchHarms: BranchHarmFinding[]
 }
 export type TenGod = '비견' | '겁재' | '식신' | '상관' | '편재' | '정재' | '편관' | '정관' | '편인' | '정인'
 export interface ElementPair { stem: FiveElement; branch: FiveElement }
@@ -56,6 +65,34 @@ export interface ExposureFinding {
 export interface ExposureAnalysis {
   hasExposure: boolean
   findings: ExposureFinding[]
+}
+export interface StemCombinationFinding {
+  pillars: [RootPillar, RootPillar]
+  stems: [string, string]
+}
+export interface BranchClashFinding {
+  pillars: [RootPillar, RootPillar]
+  branches: [string, string]
+}
+export interface BranchCombinationFinding {
+  pillars: [RootPillar, RootPillar]
+  branches: [string, string]
+}
+export interface BranchBreakFinding {
+  pillars: [RootPillar, RootPillar]
+  branches: [string, string]
+}
+export interface BranchHarmFinding {
+  pillars: [RootPillar, RootPillar]
+  branches: [string, string]
+}
+export type BranchPunishmentGroup = '인사신' | '축술미'
+export type BranchPunishmentFinding =
+  | { type: 'three-punishment'; group: BranchPunishmentGroup; complete: boolean; pillars: RootPillar[]; branches: string[] }
+  | { type: 'mutual-punishment' | 'self-punishment'; pillars: [RootPillar, RootPillar]; branches: [string, string] }
+export interface BranchPunishmentAnalysis {
+  hasPunishment: boolean
+  findings: BranchPunishmentFinding[]
 }
 /** 지지는 지장간 본기를 기준으로 계산한다. */
 export interface TenGodPair { stem: TenGod | '일간'; branch: TenGod }

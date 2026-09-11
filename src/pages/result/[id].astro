@@ -11,6 +11,8 @@ import { buildAnalysisFacts } from '../../lib/saju/analyzer/analysis-facts'
 import { getSeasonalContext } from '../../lib/saju/analyzer/seasonal'
 import { analyzeRoots } from '../../lib/saju/analyzer/roots'
 import { analyzeExposure } from '../../lib/saju/analyzer/exposure'
+import { buildStrengthFacts } from '../../lib/saju/analyzer/strength-facts'
+import { assessStrength } from '../../lib/saju/analyzer/strength'
 
 const { id } = Astro.params
 
@@ -72,6 +74,16 @@ const analysisFacts = buildAnalysisFacts(calculation)
 const seasonalContext = getSeasonalContext(calculation)
 const rootAnalysis = analyzeRoots(calculation)
 const exposureAnalysis = analyzeExposure(calculation)
+const strengthAssessment = import.meta.env.DEV
+  ? assessStrength(buildStrengthFacts(calculation, analysisFacts))
+  : null
+const sameElementExperiment = import.meta.env.DEV && strengthAssessment
+  ? await (async () => {
+    const { analyzeSameElementRootCandidates, simulateSameElementRoots } = await import('../../lib/saju/analyzer/dev/same-element-roots')
+    const candidates = analyzeSameElementRootCandidates(calculation)
+    return { candidates, scenarios: simulateSameElementRoots(strengthAssessment, candidates) }
+  })()
+  : null
 ---
 
 <html lang="ko">
@@ -255,6 +267,52 @@ const exposureAnalysis = analyzeExposure(calculation)
             <h3>오행 count</h3>
             <p>표면: {Object.entries(analysisFacts.surfaceCounts).map(([element, count]) => `${element} ${count}`).join(' / ')}</p>
             <p>지장간: {Object.entries(analysisFacts.hiddenCounts).map(([element, count]) => `${element} ${count}`).join(' / ')}</p>
+            {strengthAssessment && (
+              <>
+                <h3>신강/신약 v1 — 개발용 판정 데이터</h3>
+                <dl>
+                  <dt>level</dt>
+                  <dd>{strengthAssessment.level}</dd>
+                  <dt>confidence</dt>
+                  <dd>{strengthAssessment.confidence}</dd>
+                  {Object.entries(strengthAssessment.score).map(([name, value]) => (
+                    <>
+                      <dt>{name} score</dt>
+                      <dd>{value}</dd>
+                    </>
+                  ))}
+                  <dt>methodologyVersion</dt>
+                  <dd>{strengthAssessment.methodologyVersion}</dd>
+                </dl>
+                <h4>reasons</h4>
+                <ul>{strengthAssessment.reasons.map((reason) => <li>{reason}</li>)}</ul>
+                {sameElementExperiment && (
+                  <>
+                    <h3>same-element root candidates — DEV 실험</h3>
+                    <p>실제 StrengthAssessment에 반영하지 않는 가상 계산입니다. 월령·생조·극설소모는 기존 값, roots cap은 30, 판정 경계는 ±15입니다.</p>
+                    {sameElementExperiment.candidates.length > 0 ? (
+                      <ul>{sameElementExperiment.candidates.map((candidate) => (
+                        <li>{candidate.pillar} / {candidate.branch} / {candidate.hiddenStem} / {candidate.role}</li>
+                      ))}</ul>
+                    ) : <p>없음</p>}
+                    <p>기존 exact roots score: {strengthAssessment.score.roots}</p>
+                    <table>
+                      <thead><tr>
+                        <th>가상 비율</th><th>추가 root score (cap 전)</th><th>cap 후 증가분</th>
+                        <th>가상 roots 총점</th><th>가상 balance</th><th>가상 level</th>
+                      </tr></thead>
+                      <tbody>{sameElementExperiment.scenarios.map((scenario) => (
+                        <tr>
+                          <td>{scenario.ratio * 100}%</td><td>{scenario.additionalRoots}</td>
+                          <td>{scenario.appliedAdditionalRoots}</td><td>{scenario.roots}</td>
+                          <td>{scenario.balance}</td><td>{scenario.level}</td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </>
+                )}
+              </>
+            )}
           </section>
         )
       }

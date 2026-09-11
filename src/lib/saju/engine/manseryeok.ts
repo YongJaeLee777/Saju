@@ -1,10 +1,16 @@
-import { calculateFourPillars, getHeavenlyStemElement } from 'manseryeok'
+import {
+  calculateFourPillars, getHeavenlyStemElement, getEarthlyBranchElement,
+  getTenGod, getBranchTenGod, HEAVENLY_STEMS, EARTHLY_BRANCHES,
+  getSolarTerm, lunarToSolar,
+} from 'manseryeok'
 import type { EarthlyBranch } from 'manseryeok'
 
 import type {
   SajuInput,
   SajuResult,
   HiddenStem,
+  DaewoonPillar,
+  AnnualLuck,
 } from '../types'
 
 // manseryeok 2.0.0 exposes no full hidden-stem API.
@@ -17,11 +23,76 @@ const hiddenStemsByBranch: Record<EarthlyBranch, readonly HiddenStem['stem'][]> 
   신: ['경', '임', '무'], 유: ['신'], 술: ['무', '신', '정'], 해: ['임', '갑'],
 }
 
+/** Adapter-only calendar data for the separate raw Daewoon analyzer. */
+export function getDaewoonCalendar(input: SajuInput) {
+  const [year, month, day] = input.birthDate.split('-').map(Number)
+  const solar = input.calendarType === 'lunar'
+    ? lunarToSolar(year, month, day, input.isLeapMonth)
+    : { year, month, day }
+  const solarDate = `${String(solar.year).padStart(4, '0')}-${String(solar.month).padStart(2, '0')}-${String(solar.day).padStart(2, '0')}`
+  // Same fixed KST instant as the engine when historical civil-time correction is off.
+  // Its historical resolver is private: never silently substitute KST for that policy.
+  const instantAvailable = !input.trueSolarTime || input.trueSolarTime.applyHistoricalDst === false
+  const [hour, minute] = input.birthTime ? input.birthTime.split(':').map(Number) : []
+  const birthInstantMs = input.birthTime && instantAvailable
+    ? Date.parse(`${solarDate}T00:00:00+09:00`) + (hour * 60 + minute) * 60_000
+    : null
+  // Engine indices: 소한, 입춘, 경칩, 청명, 입하, 망종, 소서, 입추, 백로, 한로, 입동, 대설.
+  // Fetch only the 12 jeol, and skip astronomical work when timing is unavailable.
+  const jeolIndices = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
+  const jeols = (birthInstantMs === null ? [] : [solar.year - 1, solar.year, solar.year + 1]).flatMap((termYear) =>
+    jeolIndices.map((index) => {
+      const { name, date } = getSolarTerm(termYear, index)
+      return { name, instantMs: date.getTime() }
+    }),
+  ).sort((a, b) => a.instantMs - b.instantMs)
+  return { solarDate, birthInstantMs, jeols }
+}
+
+export function getDaewoonPillarCycle(dayStem: string): DaewoonPillar[] {
+  const dayMaster = HEAVENLY_STEMS.find((stem) => stem === dayStem)
+  if (!dayMaster) throw new Error(`지원하지 않는 일간입니다: ${dayStem}`)
+  return Array.from({ length: 60 }, (_, index) => {
+    const stem = HEAVENLY_STEMS[index % 10]
+    const branch = EARTHLY_BRANCHES[index % 12]
+    return {
+      stem, branch, korean: `${stem}${branch}`,
+      stemElement: getHeavenlyStemElement(stem),
+      branchElement: getEarthlyBranchElement(branch),
+      stemTenGod: getTenGod(dayMaster, stem),
+      branchTenGod: getBranchTenGod(dayMaster, branch),
+    }
+  })
+}
+
 function normalizeHiddenStems(branch: EarthlyBranch): HiddenStem[] {
   return hiddenStemsByBranch[branch].map((stem) => ({
     stem,
     element: getHeavenlyStemElement(stem),
   }))
+}
+
+export function calculateAnnualLuckWithManseryeok(year: number, dayStem: string): AnnualLuck {
+  // Leave room for the engine's neighbouring-year lookup and next Lichun.
+  if (!Number.isInteger(year) || year < 101 || year > 9998) {
+    throw new RangeError('세운 연도는 101~9998 사이의 정수여야 합니다.')
+  }
+  const dayMaster = HEAVENLY_STEMS.find((stem) => stem === dayStem)
+  if (!dayMaster) throw new Error(`지원하지 않는 일간입니다: ${dayStem}`)
+  // March 1 is inside this Lichun year. Reuse the natal year-pillar engine;
+  // no duplicated sexagenary formula or timezone conversion. Omit gender to skip Daewoon.
+  const natal = calculateFourPillars({ year, month: 3, day: 1, hour: 0, minute: 0, dayBoundary: 'midnight' })
+  const stem = natal.year.heavenlyStem
+  const branch = natal.year.earthlyBranch
+  return {
+    year, stem, branch, korean: natal.yearString,
+    stemElement: getHeavenlyStemElement(stem),
+    branchElement: getEarthlyBranchElement(branch),
+    stemTenGod: getTenGod(dayMaster, stem),
+    branchTenGod: getBranchTenGod(dayMaster, branch),
+    startDateTime: getSolarTerm(year, 2).date.toISOString(),
+    endDateTime: getSolarTerm(year + 1, 2).date.toISOString(),
+  }
 }
 
 export function calculateWithManseryeok(

@@ -2,17 +2,52 @@
 
 ## Current Status / Next Step
 
-* Phase A 완료
-* 표면 오행 count 완료
-* 지장간 오행 count / presence 완료
-* SeasonalContext 완료
-* 일간 ↔ 월지 오행 관계 완료
-* 통근 분석 완료
-* 투간 분석 완료
-* 지장간 배열 순서는 role 의미로 사용하지 않으며 `main/middle/residual` 필드를 기준으로 판단
-* 지장간 UI의 "본기 먼저" 오해 문구 수정 완료
-* 최근 전체 검증: check/typecheck/build 성공, 전체 63 tests 통과
-* 다음 구현 작업: 천간 합(天干合) 관계 분석
+Current Status:
+
+* 전체 회귀 기준:
+  * check 0 errors / 0 warnings / 0 hints
+  * typecheck 성공
+  * 19 test files / 239 tests passed
+  * build 성공
+* StrengthAssessment는 v1-beta 상태 유지
+* Daewoon raw v1 완료
+  * 순행/역행
+  * 절 기준 기운
+  * 정밀 startAge/startDateTime
+  * 10개 cycle
+  * 오행/십성
+* Annual Luck / 세운 raw v1 완료
+  * 입춘 기준 [start, nextStart)
+  * 연간지/오행/십성
+* Luck Interaction Phase 1 완료
+  * natal↔daewoon
+  * natal↔annual
+  * daewoon↔annual
+  * 천간합
+  * 지지 육합/충/형/파/해
+  * punishment는 `scope: pair-only`
+  * 3글자 complete punishment는 아직 미판정
+* Luck Flow Phase 2 완료
+  * analyzeLuckFlow({ natal, daewoon?, annualLuck? })
+  * 운의 천간/지지 오행
+  * 일간 기준 5분류 element relation
+  * 기존 stemTenGod / branchTenGod 전달
+  * repeatedElements
+  * repeatedTenGods
+  * 관련 테스트 1파일 / 6개 통과
+* Phase 1 및 Strength scoring은 변경하지 않음
+
+Next Step:
+1. Luck Interaction Phase 3 설계/구현
+2. 핵심 자리 flags:
+   * day stem affected
+   * day branch affected
+   * month branch affected
+   * 필요하면 year/hour는 일반 finding에만 유지
+3. Phase 1/2 결과를 묶는 해석용 structured facts 설계
+4. 아직 길흉/점수/용신/LLM 문장 생성은 하지 않음
+5. Phase 3 후 관련 테스트
+6. 그 다음 전체 회귀 검증 후 현대적 해석 레이어 설계로 이동
 
 ## Purpose
 

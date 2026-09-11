@@ -38,7 +38,41 @@ export interface AnalysisFacts {
   branchHarms: BranchHarmFinding[]
 }
 export type TenGod = '비견' | '겁재' | '식신' | '상관' | '편재' | '정재' | '편관' | '정관' | '편인' | '정인'
+export interface StrengthElementCounts {
+  element: FiveElement
+  surface: number
+  hidden: number
+}
+export interface StrengthFacts {
+  dayStem: string
+  dayElement: FiveElement
+  seasonal: Pick<SeasonalContext, 'monthBranch' | 'monthElement' | 'relation'>
+  roots: {
+    hasRoot: boolean
+    count: number
+    byRole: Record<HiddenStemRole, number>
+    byPillar: Record<RootPillar, boolean>
+    findings: Pick<RootFinding, 'pillar' | 'role'>[]
+  }
+  support: { sameElement: StrengthElementCounts; resourceElement: StrengthElementCounts }
+  drain: { outputElement: StrengthElementCounts; wealthElement: StrengthElementCounts; officerElement: StrengthElementCounts }
+}
 export interface ElementPair { stem: FiveElement; branch: FiveElement }
+export interface StrengthAssessment {
+  level: 'strong' | 'balanced' | 'weak'
+  confidence: 'high' | 'medium' | 'low'
+  score: {
+    seasonal: number
+    roots: number
+    elementSupport: number
+    elementPressure: number
+    support: number
+    pressure: number
+    balance: number
+  }
+  reasons: string[]
+  methodologyVersion: 'v1'
+}
 export interface HiddenStem {
   stem: '갑' | '을' | '병' | '정' | '무' | '기' | '경' | '신' | '임' | '계'
   element: FiveElement
@@ -106,4 +140,106 @@ export interface SajuResult {
   month: Pillar
   day: Pillar
   hour: { stem: string | null; branch: string | null; korean: string | null }
+}
+
+/** Raw Daewoon v1. No interpretation or strength scoring. */
+export interface DaewoonStartAge {
+  years: number
+  months: number
+  /** Fractional days retained; conversion uses 12 months/year and 30 days/month. */
+  days: number
+  preciseYears: number
+}
+export interface DaewoonPillar extends Pillar {
+  stemElement: FiveElement
+  branchElement: FiveElement
+  stemTenGod: TenGod
+  /** Main hidden stem, identical to the natal branch-ten-god policy. */
+  branchTenGod: TenGod
+}
+export interface DaewoonCycle extends DaewoonPillar {
+  index: number
+  startAge: DaewoonStartAge | null
+  /** ISO 8601, fixed +09:00 display; null when timing cannot be resolved. */
+  startDateTime: string | null
+  /** Exclusive end; identical to the next cycle's start. */
+  endDateTime: string | null
+}
+export interface DaewoonResult {
+  methodologyVersion: 'v1'
+  direction: 'forward' | 'backward'
+  monthPillar: Pillar
+  /** 'exact' uses the supplied birth time and engine terms (currently minute resolution). */
+  startPrecision: 'exact' | 'date-only' | 'unavailable'
+  timingUnavailableReason: 'birth-time-missing' | 'engine-instant-unavailable' | null
+  referenceJeol: { name: string; dateTime: string } | null
+  /** Actual elapsed time to the reference jeol, before age conversion. */
+  intervalMilliseconds: number | null
+  totalDays: number | null
+  startAge: DaewoonStartAge | null
+  startDateTime: string | null
+  cycles: DaewoonCycle[]
+}
+
+/** Raw annual luck; year identifies the solar-term year beginning at Lichun. */
+export interface AnnualLuck extends Pillar {
+  year: number
+  stemElement: FiveElement
+  branchElement: FiveElement
+  stemTenGod: TenGod
+  /** Ten god of the branch's main hidden stem, matching the natal policy. */
+  branchTenGod: TenGod
+  /** Engine Lichun instant in UTC ISO 8601 (currently minute resolution). Inclusive. */
+  startDateTime: string
+  /** Next year's Lichun instant. Exclusive: [startDateTime, endDateTime). */
+  endDateTime: string
+}
+
+export type LuckInteractionSource =
+  | { source: 'natal'; pillar: RootPillar }
+  | { source: 'daewoon' }
+  | { source: 'annual' }
+export interface LuckStemCombinationFinding {
+  type: 'combination'
+  left: { source: LuckInteractionSource; stem: string }
+  right: { source: LuckInteractionSource; stem: string }
+}
+export interface LuckBranchInteractionFinding<T extends string = string> {
+  type: T
+  left: { source: LuckInteractionSource; branch: string }
+  right: { source: LuckInteractionSource; branch: string }
+}
+export type LuckPunishmentFinding = LuckBranchInteractionFinding<'punishment'> & {
+  /** Only these two entries were evaluated; combined-chart completeness is not assessed. */
+  scope: 'pair-only'
+} & (
+  | { kind: 'three-punishment'; group: BranchPunishmentGroup; complete: false }
+  | { kind: 'mutual-punishment' | 'self-punishment' }
+)
+export interface LuckInteractionFacts {
+  stemCombinations: LuckStemCombinationFinding[]
+  branchClashes: LuckBranchInteractionFinding<'clash'>[]
+  branchCombinations: LuckBranchInteractionFinding<'six-combination'>[]
+  branchPunishments: LuckPunishmentFinding[]
+  branchBreaks: LuckBranchInteractionFinding<'break'>[]
+  branchHarms: LuckBranchInteractionFinding<'harm'>[]
+}
+
+export type LuckFlowPillar = Pick<DaewoonCycle,
+  'stem' | 'branch' | 'stemElement' | 'branchElement' | 'stemTenGod' | 'branchTenGod'>
+export interface LuckFlow extends LuckFlowPillar {
+  stemRelationToDayMaster: MonthCommandRelation
+  branchRelationToDayMaster: MonthCommandRelation
+}
+export interface LuckFlowSource {
+  source: 'daewoon' | 'annual'
+  position: 'stem' | 'branch'
+}
+export interface LuckFlowFacts {
+  dayStem: string
+  dayElement: FiveElement
+  daewoon?: LuckFlow
+  annual?: LuckFlow
+  repeatedElements: { element: FiveElement; sources: LuckFlowSource[] }[]
+  repeatedTenGods: { tenGod: TenGod; sources: LuckFlowSource[] }[]
 }

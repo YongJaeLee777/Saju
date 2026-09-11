@@ -1,13 +1,13 @@
 import type { ExposureAnalysis, HiddenStemRole, RootPillar, SajuResult } from '../types'
 
-// Same role convention as the normalized hidden-stem data; no role weighting.
+// Explicit canonical roles; independent of hidden-stem array order, without weighting.
 const ROLE_BY_BRANCH_AND_STEM: Record<string, Record<string, HiddenStemRole>> = {
-  자: { 계: 'main' }, 축: { 기: 'residual', 계: 'middle', 신: 'main' },
-  인: { 갑: 'residual', 병: 'middle', 무: 'main' }, 묘: { 을: 'main' },
-  진: { 무: 'residual', 을: 'middle', 계: 'main' }, 사: { 병: 'residual', 경: 'main', 무: 'middle' },
-  오: { 정: 'main', 기: 'residual' }, 미: { 기: 'residual', 정: 'middle', 을: 'main' },
-  신: { 경: 'residual', 임: 'middle', 무: 'main' }, 유: { 신: 'main' },
-  술: { 무: 'residual', 신: 'middle', 정: 'main' }, 해: { 임: 'residual', 갑: 'main' },
+  자: { 계: 'main' }, 축: { 기: 'main', 계: 'middle', 신: 'residual' },
+  인: { 갑: 'main', 병: 'middle', 무: 'residual' }, 묘: { 을: 'main' },
+  진: { 무: 'main', 을: 'middle', 계: 'residual' }, 사: { 병: 'main', 경: 'residual', 무: 'middle' },
+  오: { 정: 'main', 기: 'middle' }, 미: { 기: 'main', 정: 'middle', 을: 'residual' },
+  신: { 경: 'main', 임: 'middle', 무: 'residual' }, 유: { 신: 'main' },
+  술: { 무: 'main', 신: 'middle', 정: 'residual' }, 해: { 임: 'main', 갑: 'middle' },
 }
 
 export function analyzeExposure(

@@ -51,14 +51,14 @@ describe('analyzeRoots', () => {
         hour: [{ stem: '경', element: '금' }, { stem: '임', element: '수' }, { stem: '무', element: '토' }],
       },
     }
-    expect(analyzeRoots(result).roots.map(({ role }) => role)).toEqual(['residual', 'main', 'residual', 'main'])
+    expect(analyzeRoots(result).roots.map(({ role }) => role)).toEqual(['main', 'residual', 'main', 'residual'])
 
     const middleResult: SajuResult = {
       ...result,
       day: { stem: '계', branch: '축', korean: '계축' },
       hiddenStems: {
         ...result.hiddenStems,
-        year: [{ stem: '기', element: '토' }, { stem: '계', element: '수' }, { stem: '신', element: '금' }],
+        day: [{ stem: '기', element: '토' }, { stem: '계', element: '수' }, { stem: '신', element: '금' }],
       },
     }
     expect(analyzeRoots(middleResult).roots.some(({ role }) => role === 'middle')).toBe(true)

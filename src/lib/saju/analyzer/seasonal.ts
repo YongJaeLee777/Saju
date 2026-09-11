@@ -14,7 +14,7 @@ const ELEMENT_CONTROLS: Record<FiveElement, FiveElement> = {
   목: '토', 토: '수', 수: '화', 화: '금', 금: '목',
 }
 
-function classifyMonthCommandRelation(
+export function classifyMonthCommandRelation(
   dayStemElement: FiveElement,
   monthElement: FiveElement,
 ): MonthCommandRelation {

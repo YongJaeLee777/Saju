@@ -3,28 +3,18 @@ export const prerender = false
 
 import { env } from 'cloudflare:workers'
 import { eq } from 'drizzle-orm'
-
 import { createDb } from '../../db/client'
 import { sajuProfiles } from '../../db/schema'
-import { calculateSaju } from '../../lib/saju/calculator'
-import { buildAnalysisFacts } from '../../lib/saju/analyzer/analysis-facts'
-import { getSeasonalContext } from '../../lib/saju/analyzer/seasonal'
-import { analyzeRoots } from '../../lib/saju/analyzer/roots'
-import { analyzeExposure } from '../../lib/saju/analyzer/exposure'
-import { buildStrengthFacts } from '../../lib/saju/analyzer/strength-facts'
-import { assessStrength } from '../../lib/saju/analyzer/strength'
+import { buildResultPageData } from '../../lib/saju/server/result-page'
 
 const { id } = Astro.params
-
 if (!id) {
-  return Astro.redirect('/')
+  return new Response('사주 정보를 찾을 수 없습니다.', { status: 404 })
 }
 
 const db = createDb(env.saju_db)
-
 const profiles = await db
   .select({
-    id: sajuProfiles.id,
     birthDate: sajuProfiles.birthDate,
     birthTime: sajuProfiles.birthTime,
     gender: sajuProfiles.gender,
@@ -35,287 +25,70 @@ const profiles = await db
   .where(eq(sajuProfiles.id, id))
   .limit(1)
 
-const sajuProfile = profiles[0]
-
-if (!sajuProfile) {
-  return new Response('사주 정보를 찾을 수 없습니다.', {
-    status: 404,
-  })
+const profile = profiles[0]
+if (!profile) {
+  return new Response('사주 정보를 찾을 수 없습니다.', { status: 404 })
+}
+if (profile.gender !== 'male' && profile.gender !== 'female') {
+  return new Response('잘못된 성별 데이터입니다.', { status: 500 })
+}
+if (profile.calendarType !== 'solar' && profile.calendarType !== 'lunar') {
+  return new Response('잘못된 달력 데이터입니다.', { status: 500 })
 }
 
-if (
-  sajuProfile.gender !== 'male' &&
-  sajuProfile.gender !== 'female'
-) {
-  return new Response('잘못된 성별 데이터입니다.', {
-    status: 500,
-  })
-}
-
-if (
-  sajuProfile.calendarType !== 'solar' &&
-  sajuProfile.calendarType !== 'lunar'
-) {
-  return new Response('잘못된 달력 데이터입니다.', {
-    status: 500,
-  })
-}
-
-const calculation = calculateSaju({
-  birthDate: sajuProfile.birthDate,
-  birthTime: sajuProfile.birthTime,
-  gender: sajuProfile.gender,
-  calendarType: sajuProfile.calendarType,
-  isLeapMonth: sajuProfile.isLeapMonth,
+const { pillars, luck, daewoonNotice, report } = buildResultPageData({
+  birthDate: profile.birthDate,
+  birthTime: profile.birthTime,
+  gender: profile.gender,
+  calendarType: profile.calendarType,
+  isLeapMonth: profile.isLeapMonth,
 })
-
-const pillarKeys = ['year', 'month', 'day', 'hour'] as const
-const analysisFacts = buildAnalysisFacts(calculation)
-const seasonalContext = getSeasonalContext(calculation)
-const rootAnalysis = analyzeRoots(calculation)
-const exposureAnalysis = analyzeExposure(calculation)
-const strengthAssessment = import.meta.env.DEV
-  ? assessStrength(buildStrengthFacts(calculation, analysisFacts))
-  : null
-const sameElementExperiment = import.meta.env.DEV && strengthAssessment
-  ? await (async () => {
-    const { analyzeSameElementRootCandidates, simulateSameElementRoots } = await import('../../lib/saju/analyzer/dev/same-element-roots')
-    const candidates = analyzeSameElementRootCandidates(calculation)
-    return { candidates, scenarios: simulateSameElementRoots(strengthAssessment, candidates) }
-  })()
-  : null
 ---
 
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>사주 결과</title>
   </head>
-
   <body>
     <main>
-      <h1>사주 정보</h1>
-
-      <section>
-        <h2>입력 정보</h2>
-
-        <dl>
-          <dt>생년월일</dt>
-          <dd>{sajuProfile.birthDate}</dd>
-
-          <dt>태어난 시간</dt>
-          <dd>{sajuProfile.birthTime ?? '모름'}</dd>
-
-          <dt>성별</dt>
-          <dd>
-            {sajuProfile.gender === 'male' ? '남성' : '여성'}
-          </dd>
-
-          <dt>달력</dt>
-          <dd>
-            {sajuProfile.calendarType === 'solar' ? '양력' : '음력'}
-          </dd>
-
-          {
-            sajuProfile.calendarType === 'lunar' && (
-              <>
-                <dt>윤달</dt>
-                <dd>
-                  {sajuProfile.isLeapMonth ? '예' : '아니오'}
-                </dd>
-              </>
-            )
-          }
-        </dl>
-      </section>
-
+      <h1>사주 결과</h1>
       <section>
         <h2>사주팔자</h2>
-
         <table>
           <thead>
-            <tr>
-              <th></th>
-              <th>년주</th>
-              <th>월주</th>
-              <th>일주</th>
-              <th>시주</th>
-            </tr>
+            <tr><th scope="col">구분</th><th scope="col">년주</th><th scope="col">월주</th><th scope="col">일주</th><th scope="col">시주</th></tr>
           </thead>
-
           <tbody>
-            <tr>
-              <th>천간</th>
-              <td>{calculation.year.stem}</td>
-              <td>{calculation.month.stem}</td>
-              <td>{calculation.day.stem}</td>
-              <td>{calculation.hour.stem ?? '-'}</td>
-            </tr>
-
-            <tr>
-              <th>지지</th>
-              <td>{calculation.year.branch}</td>
-              <td>{calculation.month.branch}</td>
-              <td>{calculation.day.branch}</td>
-              <td>{calculation.hour.branch ?? '-'}</td>
-            </tr>
+            <tr><th scope="row">천간</th>{pillars.map((pillar) => <td>{pillar.stem ?? '모름'}</td>)}</tr>
+            <tr><th scope="row">지지</th>{pillars.map((pillar) => <td>{pillar.branch ?? '모름'}</td>)}</tr>
           </tbody>
         </table>
+        {!profile.birthTime && <p>출생시간을 몰라 시주는 표시하지 않습니다. 절기 전환일에는 출생시간에 따라 년주·월주가 달라질 수 있습니다.</p>}
       </section>
-
       <section>
-        <h2>오행</h2>
-        <p>각 천간과 지지에 해당하는 오행입니다. 오행의 강약이나 비율을 뜻하지 않습니다.</p>
-        <table>
-          <caption>기둥별 천간·지지 오행</caption>
-          <thead><tr><th scope="col">구분</th><th scope="col">년주</th><th scope="col">월주</th><th scope="col">일주</th><th scope="col">시주</th></tr></thead>
-          <tbody>
-            <tr><th scope="row">천간 오행</th>{pillarKeys.map((key) => <td>{calculation.elements[key]?.stem ?? '모름'}</td>)}</tr>
-            <tr><th scope="row">지지 오행</th>{pillarKeys.map((key) => <td>{calculation.elements[key]?.branch ?? '모름'}</td>)}</tr>
-          </tbody>
-        </table>
+        <h2>현재 대운 / 2026 세운</h2>
+        <p>대운 기준일: {luck.referenceDate} (한국시간)</p>
+        <dl>
+          <dt>현재 대운</dt>
+          <dd>{luck.currentDaewoon ? <>{luck.currentDaewoon.label} · {luck.currentDaewoon.periodLabel}</> : daewoonNotice}</dd>
+          <dt>2026 세운</dt>
+          <dd>{luck.currentAnnualLuck?.label} · {luck.currentAnnualLuck?.periodLabel}</dd>
+        </dl>
+        <p>아래 요약에서 ‘올해’는 2026년 세운을 뜻합니다.</p>
       </section>
-
       <section>
-        <h2>표면 오행 분포</h2>
-        <p>천간·지지의 글자 수를 단순 집계한 값이며, 오행의 실제 세기나 강도를 의미하지 않습니다.</p>
-        <p>{calculation.elements.hour === null ? '출생시간을 몰라 시주 2글자를 제외한 총 6글자 기준입니다.' : '년주·월주·일주·시주의 총 8글자 기준입니다.'}</p>
-        <table>
-          <caption>표면 오행 글자 수</caption>
-          <thead><tr>{Object.keys(analysisFacts.surfaceCounts).map((element) => <th scope="col">{element}</th>)}</tr></thead>
-          <tbody><tr>{Object.values(analysisFacts.surfaceCounts).map((count) => <td>{count}개</td>)}</tr></tbody>
-        </table>
-        <table>
-          <caption>지장간 오행 글자 수</caption>
-          <thead><tr>{Object.keys(analysisFacts.hiddenCounts).map((element) => <th scope="col">{element}</th>)}</tr></thead>
-          <tbody><tr>{Object.values(analysisFacts.hiddenCounts).map((count) => <td>{count}개</td>)}</tr></tbody>
-        </table>
+        <h2>{report.title}</h2>
+        <p>{report.intro}</p>
+        {report.sections.map((section) => (
+          <article>
+            <h3>{section.headline}</h3>
+            <p>{section.body}</p>
+          </article>
+        ))}
+        <p>{report.closing}</p>
       </section>
-
-      <section>
-        <h2>지장간</h2>
-        <p>각 지지에 포함된 천간과 오행입니다. 표시 순서는 중요도·강도·본기 우선순위를 뜻하지 않습니다.</p>
-        <table>
-          <caption>지지별 지장간</caption>
-          <thead><tr><th scope="col">년지</th><th scope="col">월지</th><th scope="col">일지</th><th scope="col">시지</th></tr></thead>
-          <tbody><tr>{pillarKeys.map((key) => <td>{calculation.hiddenStems[key]?.map(({ stem, element }) => `${stem}(${element})`).join(', ') ?? '출생시간 모름'}</td>)}</tr></tbody>
-        </table>
-      </section>
-
-      <section>
-        <h2>십성</h2>
-        <p>일간(나를 나타내는 천간)을 기준으로 한 관계입니다. 지지 십성은 지장간의 본기를 기준으로 표시합니다.</p>
-        <table>
-          <caption>일간 기준 십성</caption>
-          <thead><tr><th scope="col">구분</th><th scope="col">년주</th><th scope="col">월주</th><th scope="col">일주</th><th scope="col">시주</th></tr></thead>
-          <tbody>
-            <tr><th scope="row">천간 십성</th>{pillarKeys.map((key) => <td>{calculation.tenGods[key]?.stem ?? '모름'}</td>)}</tr>
-            <tr><th scope="row">지지 십성</th>{pillarKeys.map((key) => <td>{calculation.tenGods[key]?.branch ?? '모름'}</td>)}</tr>
-          </tbody>
-        </table>
-        {!sajuProfile.birthTime && <p>출생시간을 몰라 시주의 오행과 십성은 표시하지 않습니다. 절기 전환일에는 출생시간에 따라 년주·월주가 달라질 수 있습니다.</p>}
-      </section>
-
-      {
-        import.meta.env.DEV && (
-          <section>
-            <h2>개발용 분석 패널</h2>
-            <p>개발 환경에서 현재 분석 엔진의 중간 데이터를 확인하기 위한 패널입니다.</p>
-
-            <dl>
-              <dt>월지</dt>
-              <dd>{seasonalContext.monthBranch}</dd>
-              <dt>계절</dt>
-              <dd>{seasonalContext.season}</dd>
-              <dt>일간 오행</dt>
-              <dd>{seasonalContext.dayStemElement}</dd>
-              <dt>일간 ↔ 월지 관계</dt>
-              <dd>{seasonalContext.relation}</dd>
-              <dt>통근</dt>
-              <dd>{rootAnalysis.hasRoot ? '있음' : '없음'}</dd>
-              <dt>투간</dt>
-              <dd>{exposureAnalysis.hasExposure ? '있음' : '없음'}</dd>
-            </dl>
-
-            <h3>통근 findings</h3>
-            {
-              rootAnalysis.roots.length > 0 ? (
-                <ul>
-                  {rootAnalysis.roots.map((root) => (
-                    <li>{root.pillar} / {root.branch} / {root.hiddenStem} / {root.role}</li>
-                  ))}
-                </ul>
-              ) : <p>없음</p>
-            }
-
-            <h3>투간 findings</h3>
-            {
-              exposureAnalysis.findings.length > 0 ? (
-                <ul>
-                  {exposureAnalysis.findings.map((finding) => (
-                    <li>{finding.sourcePillar} / {finding.sourceBranch} / {finding.hiddenStem} / {finding.role} / {finding.exposedPillars.join(', ')}</li>
-                  ))}
-                </ul>
-              ) : <p>없음</p>
-            }
-
-            <h3>오행 count</h3>
-            <p>표면: {Object.entries(analysisFacts.surfaceCounts).map(([element, count]) => `${element} ${count}`).join(' / ')}</p>
-            <p>지장간: {Object.entries(analysisFacts.hiddenCounts).map(([element, count]) => `${element} ${count}`).join(' / ')}</p>
-            {strengthAssessment && (
-              <>
-                <h3>신강/신약 v1 — 개발용 판정 데이터</h3>
-                <dl>
-                  <dt>level</dt>
-                  <dd>{strengthAssessment.level}</dd>
-                  <dt>confidence</dt>
-                  <dd>{strengthAssessment.confidence}</dd>
-                  {Object.entries(strengthAssessment.score).map(([name, value]) => (
-                    <>
-                      <dt>{name} score</dt>
-                      <dd>{value}</dd>
-                    </>
-                  ))}
-                  <dt>methodologyVersion</dt>
-                  <dd>{strengthAssessment.methodologyVersion}</dd>
-                </dl>
-                <h4>reasons</h4>
-                <ul>{strengthAssessment.reasons.map((reason) => <li>{reason}</li>)}</ul>
-                {sameElementExperiment && (
-                  <>
-                    <h3>same-element root candidates — DEV 실험</h3>
-                    <p>실제 StrengthAssessment에 반영하지 않는 가상 계산입니다. 월령·생조·극설소모는 기존 값, roots cap은 30, 판정 경계는 ±15입니다.</p>
-                    {sameElementExperiment.candidates.length > 0 ? (
-                      <ul>{sameElementExperiment.candidates.map((candidate) => (
-                        <li>{candidate.pillar} / {candidate.branch} / {candidate.hiddenStem} / {candidate.role}</li>
-                      ))}</ul>
-                    ) : <p>없음</p>}
-                    <p>기존 exact roots score: {strengthAssessment.score.roots}</p>
-                    <table>
-                      <thead><tr>
-                        <th>가상 비율</th><th>추가 root score (cap 전)</th><th>cap 후 증가분</th>
-                        <th>가상 roots 총점</th><th>가상 balance</th><th>가상 level</th>
-                      </tr></thead>
-                      <tbody>{sameElementExperiment.scenarios.map((scenario) => (
-                        <tr>
-                          <td>{scenario.ratio * 100}%</td><td>{scenario.additionalRoots}</td>
-                          <td>{scenario.appliedAdditionalRoots}</td><td>{scenario.roots}</td>
-                          <td>{scenario.balance}</td><td>{scenario.level}</td>
-                        </tr>
-                      ))}</tbody>
-                    </table>
-                  </>
-                )}
-              </>
-            )}
-          </section>
-        )
-      }
     </main>
   </body>
 </html>

@@ -225,6 +225,26 @@ export interface LuckInteractionFacts {
   branchHarms: LuckBranchInteractionFinding<'harm'>[]
 }
 
+/** Retains the Phase 1 finding, including punishment's pair-only policy. */
+export type KeyPillarInteractionFinding<K extends keyof LuckInteractionFacts> =
+  LuckInteractionFacts[K][number] & {
+    externalSource: 'daewoon' | 'annual'
+    /** Index in the supplied Phase 1 collection. */
+    origin: { collection: K; index: number }
+  }
+export interface KeyPillarInteractionFact<T> {
+  affected: boolean
+  byDaewoon: boolean
+  byAnnual: boolean
+  findings: T[]
+}
+export interface KeyPillarInteractionFacts {
+  /** v1: heavenly-stem combination only. */
+  dayStem: KeyPillarInteractionFact<KeyPillarInteractionFinding<'stemCombinations'>>
+  dayBranch: KeyPillarInteractionFact<KeyPillarInteractionFinding<Exclude<keyof LuckInteractionFacts, 'stemCombinations'>>>
+  monthBranch: KeyPillarInteractionFact<KeyPillarInteractionFinding<Exclude<keyof LuckInteractionFacts, 'stemCombinations'>>>
+}
+
 export type LuckFlowPillar = Pick<DaewoonCycle,
   'stem' | 'branch' | 'stemElement' | 'branchElement' | 'stemTenGod' | 'branchTenGod'>
 export interface LuckFlow extends LuckFlowPillar {
@@ -242,4 +262,74 @@ export interface LuckFlowFacts {
   annual?: LuckFlow
   repeatedElements: { element: FiveElement; sources: LuckFlowSource[] }[]
   repeatedTenGods: { tenGod: TenGod; sources: LuckFlowSource[] }[]
+}
+
+/** Composition of existing analysis results, without additional interpretation. */
+export interface InterpretationFacts {
+  context: {
+    dayStem: SajuResult['day']['stem']
+    dayElement: SajuResult['elements']['day']['stem']
+    strengthLevel: StrengthAssessment['level']
+    strengthConfidence: StrengthAssessment['confidence']
+    methodologyVersion: StrengthAssessment['methodologyVersion']
+  }
+  luck: { daewoon?: DaewoonCycle; annual?: AnnualLuck }
+  interactions: LuckInteractionFacts
+  flow: Omit<LuckFlowFacts, 'dayStem' | 'dayElement'>
+  keyPillars: KeyPillarInteractionFacts
+}
+
+export type InterpretationTopic = 'career' | 'money' | 'relationship' | 'timing'
+export type SignalDirection = 'supportive' | 'challenging' | 'mixed' | 'neutral'
+export type SignalStrength = 'low' | 'medium' | 'high'
+export type SignalPriority = 'low' | 'medium' | 'high'
+export type SignalScope = 'background' | 'annual' | 'reinforced'
+export type InterpretationSignalCode =
+  | 'career_change_pressure' | 'career_responsibility_pressure'
+  | 'money_resource_opportunity' | 'money_resource_management_pressure'
+  | 'relationship_restructuring' | 'timing_transition'
+export type InterpretationSignalEvidence = {
+  /** Semantic identity, independent of wrappers and array indices. */
+  id: string
+  /** Paths within the supplied InterpretationFacts. */
+  paths: string[]
+} & (
+  | { kind: 'interaction'; finding: LuckInteractionFacts[keyof LuckInteractionFacts][number] }
+  | { kind: 'tenGod'; source: LuckFlowSource; tenGod: TenGod }
+  | { kind: 'elementRelation'; source: LuckFlowSource; relation: MonthCommandRelation }
+  | { kind: 'repeatedElement'; element: FiveElement; sources: LuckFlowSource[] }
+  | { kind: 'repeatedTenGod'; tenGod: TenGod; sources: LuckFlowSource[] }
+)
+export interface InterpretationSignal {
+  code: InterpretationSignalCode
+  topic: InterpretationTopic
+  direction: SignalDirection
+  strength: SignalStrength
+  priority: SignalPriority
+  scope: SignalScope
+  evidence: InterpretationSignalEvidence[]
+  methodologyVersion: 'interpretation-v1-alpha.3'
+}
+export interface InterpretationSignals {
+  methodologyVersion: 'interpretation-v1-alpha.3'
+  signals: InterpretationSignal[]
+}
+
+export interface TopicSummary {
+  topic: InterpretationTopic
+  backgroundSignals: InterpretationSignal[]
+  annualSignals: InterpretationSignal[]
+  reinforcedSignals: InterpretationSignal[]
+  dominantPriority: SignalPriority
+  dominantStrength: SignalStrength
+  signalCodes: InterpretationSignalCode[]
+  methodologyVersion: 'topic-summary-v1'
+}
+
+export interface RenderedTopicSummary {
+  topic: InterpretationTopic
+  headline: string
+  body: string
+  scopeLabel: string
+  methodologyVersion: 'topic-renderer-v1.2'
 }

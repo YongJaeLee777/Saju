@@ -333,3 +333,45 @@ export interface RenderedTopicSummary {
   scopeLabel: string
   methodologyVersion: 'topic-renderer-v1.2'
 }
+
+/** Existing source data supplied by the caller; never inferred from rendered text. */
+export interface ReportTopicProvenance {
+  readonly topic: InterpretationTopic
+  readonly signals: readonly InterpretationSignal[]
+  readonly sourceSignalCodes: readonly InterpretationSignalCode[]
+  readonly dominantStrength: TopicSummary['dominantStrength']
+  readonly dominantPriority: TopicSummary['dominantPriority']
+}
+
+export interface ReportLuckMetadata {
+  readonly referenceDate: string
+  readonly currentDaewoon: { readonly label: string; readonly periodLabel: string } | null
+  readonly currentAnnualLuck: { readonly year: number; readonly label: string; readonly periodLabel: string } | null
+}
+
+export interface ReportMethodologyVersions {
+  readonly strength: StrengthAssessment['methodologyVersion']
+  readonly interpretation: InterpretationSignals['methodologyVersion']
+  readonly topicSummary: TopicSummary['methodologyVersion']
+  readonly topicRenderer: RenderedTopicSummary['methodologyVersion']
+}
+
+export interface DeterministicReportInput {
+  readonly topics: readonly Readonly<RenderedTopicSummary>[]
+  readonly provenance: readonly ReportTopicProvenance[]
+  readonly luck: ReportLuckMetadata
+  readonly methodologyVersions: ReportMethodologyVersions
+  readonly edition: 'free' | 'paid'
+}
+
+export interface DeterministicReport {
+  readonly title: string
+  readonly intro: string
+  readonly sections: readonly Readonly<RenderedTopicSummary>[]
+  readonly closing: string
+  readonly sourceSignalCodes: readonly InterpretationSignalCode[]
+  readonly provenance: readonly ReportTopicProvenance[]
+  readonly luck: ReportLuckMetadata
+  readonly methodologyVersions: ReportMethodologyVersions
+  readonly edition: DeterministicReportInput['edition']
+}

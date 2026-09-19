@@ -43,6 +43,14 @@ const { pillars, luck, daewoonNotice, report } = buildResultPageData({
   calendarType: profile.calendarType,
   isLeapMonth: profile.isLeapMonth,
 })
+
+// Presentation only: preserve the supplied period and scope information.
+const dateRange = (period: string) => period.match(/\d{4}-\d{2}-\d{2}/g)?.join(' ~ ') ?? period
+const scopeBadges: Record<string, string> = {
+  '당분간 이어질 수 있는 배경': '장기 배경',
+  '올해 상대적으로 두드러질 수 있음': '올해',
+  '장기 요인과 올해 요인이 겹침': '장기+올해',
+}
 ---
 
 <html lang="ko">
@@ -53,10 +61,15 @@ const { pillars, luck, daewoonNotice, report } = buildResultPageData({
   </head>
   <body>
     <main>
-      <h1>사주 결과</h1>
-      <section>
-        <h2>사주팔자</h2>
+      <header class="page-header">
+        <p class="eyebrow">나의 사주</p>
+        <h1>사주와 운의 흐름</h1>
+        <p>태어난 날의 사주와 현재 대운, 2026년 세운을 함께 살펴보세요.</p>
+      </header>
+      <section class="panel" aria-labelledby="pillars-heading">
+        <h2 id="pillars-heading">나의 사주팔자</h2>
         <table>
+          <caption>태어난 해·달·날·시간의 천간과 지지</caption>
           <thead>
             <tr><th scope="col">구분</th><th scope="col">년주</th><th scope="col">월주</th><th scope="col">일주</th><th scope="col">시주</th></tr>
           </thead>
@@ -65,30 +78,86 @@ const { pillars, luck, daewoonNotice, report } = buildResultPageData({
             <tr><th scope="row">지지</th>{pillars.map((pillar) => <td>{pillar.branch ?? '모름'}</td>)}</tr>
           </tbody>
         </table>
-        {!profile.birthTime && <p>출생시간을 몰라 시주는 표시하지 않습니다. 절기 전환일에는 출생시간에 따라 년주·월주가 달라질 수 있습니다.</p>}
+        {!profile.birthTime && <p class="notice">출생시간을 몰라 시주는 표시하지 않습니다. 절기 전환일에는 출생시간에 따라 년주·월주가 달라질 수 있습니다.</p>}
       </section>
-      <section>
-        <h2>현재 대운 / 2026 세운</h2>
-        <p>대운 기준일: {luck.referenceDate} (한국시간)</p>
-        <dl>
-          <dt>현재 대운</dt>
-          <dd>{luck.currentDaewoon ? <>{luck.currentDaewoon.label} · {luck.currentDaewoon.periodLabel}</> : daewoonNotice}</dd>
-          <dt>2026 세운</dt>
-          <dd>{luck.currentAnnualLuck?.label} · {luck.currentAnnualLuck?.periodLabel}</dd>
-        </dl>
-        <p>아래 요약에서 ‘올해’는 2026년 세운을 뜻합니다.</p>
+      <section aria-labelledby="luck-heading">
+        <h2 id="luck-heading">현재 대운 / 2026 세운</h2>
+        <p class="section-note">대운 기준일: {luck.referenceDate} (한국시간)</p>
+        <div class="luck-grid">
+          <article class="panel luck-card">
+            <h3>현재 대운</h3>
+            {luck.currentDaewoon ? <>
+              <p class="ganji">{luck.currentDaewoon.label}</p>
+              <p class="period">{dateRange(luck.currentDaewoon.periodLabel)}</p>
+              <details><summary>정확한 전환 시각 보기</summary><p>{luck.currentDaewoon.periodLabel}</p></details>
+            </> : <p class="notice">{daewoonNotice}</p>}
+          </article>
+          <article class="panel luck-card">
+            <h3>2026 세운</h3>
+            {luck.currentAnnualLuck ? <>
+              <p class="ganji">{luck.currentAnnualLuck.label}</p>
+              <p class="period">{dateRange(luck.currentAnnualLuck.periodLabel)}</p>
+              <details><summary>정확한 입춘 시각 보기</summary><p>{luck.currentAnnualLuck.periodLabel}</p></details>
+            </> : <p class="notice">2026년 세운 정보를 확인할 수 없습니다.</p>}
+          </article>
+        </div>
+        <p class="section-note">기간은 한국시간 기준이며, 종료 시각 직전까지 적용됩니다. 아래 요약에서 ‘올해’는 2026년 세운을 뜻합니다.</p>
       </section>
-      <section>
-        <h2>{report.title}</h2>
-        <p>{report.intro}</p>
+      <section aria-labelledby="report-heading">
+        <h2 id="report-heading">주제별로 살펴보는 나의 흐름</h2>
+        <p class="section-note">일과 관계, 변화의 시기에 참고할 내용을 모았어요. 배지는 각 내용이 해당하는 기간을 알려줘요.</p>
+        {report.sections.length === 0 && <p class="panel notice">현재 표시할 주제별 요약이 없습니다.</p>}
+        <div class="topic-list">
         {report.sections.map((section) => (
-          <article>
+          <article class="panel topic-card">
+            <ul class="badges" aria-label="해당 기간">
+              {section.scopeLabel.split(' · ').filter(Boolean).map((label) => <li class="badge">{scopeBadges[label] ?? label}</li>)}
+            </ul>
             <h3>{section.headline}</h3>
             <p>{section.body}</p>
           </article>
         ))}
-        <p>{report.closing}</p>
+        </div>
       </section>
     </main>
   </body>
 </html>
+
+<style>
+  :global(body) { margin: 0; background: #f5f6f8; color: #24332f; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; line-height: 1.7; }
+  :global(*) { box-sizing: border-box; }
+  main { max-width: 800px; margin: 0 auto; padding: 32px 16px 56px; }
+  .page-header { margin-bottom: 28px; }
+  h1, h2, h3, p { margin: 0; }
+  h1 { font-size: clamp(1.75rem, 5vw, 2.25rem); line-height: 1.35; letter-spacing: -0.04em; }
+  h2 { font-size: 1.25rem; line-height: 1.5; }
+  h3 { font-size: 1.1rem; line-height: 1.5; }
+  p { word-break: keep-all; overflow-wrap: anywhere; }
+  .page-header > p:last-child { margin-top: 12px; color: #52625d; }
+  .eyebrow { color: #356456; font-size: 0.875rem; font-weight: 700; margin-bottom: 8px; }
+  section + section { margin-top: 32px; }
+  .panel { background: #fff; border: 1px solid #dce3df; border-radius: 16px; padding: 20px 16px; min-width: 0; }
+  table { width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 12px; text-align: center; }
+  caption { text-align: left; font-size: 0.875rem; color: #52625d; margin-bottom: 16px; }
+  th, td { border: 1px solid #dce3df; padding: 12px 2px; }
+  th { background: #f4f7f5; font-size: 0.875rem; font-weight: 600; }
+  td { font-size: 1.25rem; font-weight: 700; }
+  .notice, .section-note { color: #52625d; font-size: 0.9375rem; margin-top: 12px; }
+  .luck-grid { display: grid; gap: 12px; margin-top: 16px; }
+  .ganji { font-size: 2rem; font-weight: 700; margin-top: 12px; color: #255344; }
+  .period { font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+  details { margin-top: 16px; border-top: 1px solid #e5eae7; font-size: 0.875rem; color: #52625d; }
+  summary { padding: 12px 0; min-height: 44px; cursor: pointer; }
+  summary:focus-visible { outline: 2px solid #356456; outline-offset: 3px; border-radius: 4px; }
+  details p { padding-bottom: 4px; }
+  .topic-list { display: grid; gap: 16px; margin-top: 20px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0 0 12px; list-style: none; }
+  .badge { background: #eaf2ed; color: #305747; border: 1px solid #d4e4da; border-radius: 999px; font-size: 0.8125rem; font-weight: 600; padding: 3px 10px; }
+  .topic-card > p { margin-top: 12px; line-height: 1.85; }
+  @media (min-width: 640px) {
+    main { padding: 48px 24px 72px; }
+    .panel { padding: 24px; }
+    .luck-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    td { font-size: 1.5rem; }
+  }
+</style>

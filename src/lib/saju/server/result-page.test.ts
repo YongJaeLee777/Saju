@@ -26,7 +26,10 @@ describe('result page deterministic pipeline', () => {
     expect(result.report.sections.every(({ headline, body }) => headline.length > 0 && body.length > 0)).toBe(true)
     expect(Object.keys(result)).toEqual(['pillars', 'luck', 'daewoonNotice', 'report'])
     expect(Object.keys(result.report)).toEqual(['title', 'intro', 'closing', 'sections'])
-    expect(result.report.sections.every((section) => Object.keys(section).join(',') === 'topic,headline,body')).toBe(true)
+    expect(result.report.sections.every((section) => Object.keys(section).join(',') === 'topic,headline,body,scopeLabel')).toBe(true)
+    expect(result.report.sections.every(({ scopeLabel }) => scopeLabel.split(' · ').every((label) => [
+      '당분간 이어질 수 있는 배경', '올해 상대적으로 두드러질 수 있음', '장기 요인과 올해 요인이 겹침',
+    ].includes(label)))).toBe(true)
     expect(JSON.stringify(result)).not.toMatch(/evidence|provenance|strength|signals|birthDate/)
     expect(buildResultPageData(input, now)).toEqual(result)
     expect(input).toEqual(before)

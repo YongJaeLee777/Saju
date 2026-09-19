@@ -70,7 +70,7 @@ export function buildResultPageData(input: SajuInput, now: Date = new Date()) {
       : '기준 시각에 해당하는 대운 정보를 확인할 수 없습니다.',
     report: {
       title: report.title, intro: report.intro, closing: report.closing,
-      sections: report.sections.map(({ topic, headline, body }) => ({ topic, headline, body })),
+      sections: report.sections.map(({ topic, headline, body, scopeLabel }) => ({ topic, headline, body, scopeLabel })),
     },
   }
 }

@@ -1501,3 +1501,20 @@ Phase A의 `SajuResult.elements`를 받아 년주·월주·일주·시주의 천
 Phase A와 Phase B 첫 작업(표면 오행 단순 집계)을 완료했다.
 다음 분석 작업은 지장간 등 후보의 범위와 방법론을 먼저 합의한 뒤 진행한다.
 가중치·강도 해석과 계산 결과 DB 저장은 아직 구현하지 않았다.
+
+---
+
+## 37. 해석 topic 및 deterministic report 파이프라인
+
+Interpretation Signal `alpha.3`, TopicSummary, renderer `v1.2`를 연결하고,
+source signal codes와 provenance를 보존하는 deterministic report를 추가했다.
+LLM prompt/validator/fallback 안전계층과 `gpt-5.6-luna` 실호출 실험을 완료했으며,
+새 판단을 허용하지 않는 semantic guard를 적용했다. 실험 결과 MVP 기본 LLM 사용은 보류한다.
+
+`/result/[id]`는 PK로 profile 1건을 조회한 뒤 계산, 현재 대운, 2026 세운,
+InterpretationFacts, Signals, TopicSummary, renderer, deterministic report를 서버에서 조립해
+기본 사주 4주와 report 문장을 표시한다. 대표 1991-01-02 13:04 여성 화면 검증을 완료했다.
+
+최종 회귀 결과는 check/typecheck 통과, 29 files / 402 tests 통과, build 통과다.
+
+다음 시작점은 결과 페이지 UX v1 개선이며, 계산/engine/DB schema/LLM 로직은 변경하지 않는다.

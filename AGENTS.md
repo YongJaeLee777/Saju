@@ -783,6 +783,8 @@ Later:
 
 This is a revenue-validation MVP, not an infrastructure showcase.
 
+MVP 기본 리포트는 deterministic 결과를 사용한다. LLM은 기본 OFF인 실험용 계층이며, 호출 또는 검증 실패 시 deterministic report로 fallback한다.
+
 Favor:
 - simple
 - cheap

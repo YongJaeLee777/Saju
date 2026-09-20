@@ -1,0 +1,1484 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "id": "8e6a89ec-0f48-4a02-a94b-d61e0cdcaa93",
+  "prevIds": [
+    "7c0f92da-de6f-42d9-8300-0070b44fa1ca"
+  ],
+  "ddl": [
+    {
+      "name": "anonymous_buyers",
+      "entityType": "tables"
+    },
+    {
+      "name": "auth_accounts",
+      "entityType": "tables"
+    },
+    {
+      "name": "purchases",
+      "entityType": "tables"
+    },
+    {
+      "name": "report_entitlements",
+      "entityType": "tables"
+    },
+    {
+      "name": "report_snapshots",
+      "entityType": "tables"
+    },
+    {
+      "name": "saju_profiles",
+      "entityType": "tables"
+    },
+    {
+      "name": "saju_results",
+      "entityType": "tables"
+    },
+    {
+      "name": "users",
+      "entityType": "tables"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "anonymous_buyers"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "token_hash",
+      "entityType": "columns",
+      "table": "anonymous_buyers"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "anonymous_buyers"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "expires_at",
+      "entityType": "columns",
+      "table": "anonymous_buyers"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "revoked_at",
+      "entityType": "columns",
+      "table": "anonymous_buyers"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "auth_accounts"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "table": "auth_accounts"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "provider",
+      "entityType": "columns",
+      "table": "auth_accounts"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "provider_account_id",
+      "entityType": "columns",
+      "table": "auth_accounts"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "auth_accounts"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "buyer_id",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "profile_id",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "report_year",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "provider",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "environment",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "cid",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "partner_order_id",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "partner_user_id",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "tid",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "approval_aid",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "product_code",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "item_name",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "1",
+      "generated": null,
+      "name": "quantity",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "'KRW'",
+      "generated": null,
+      "name": "currency",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "expected_total_amount",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "expected_tax_free_amount",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "expected_vat_amount",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "approved_total_amount",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "approved_amount_json",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "payment_method_type",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "provider_approved_at",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "'ready'",
+      "generated": null,
+      "name": "status",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "'preparing'",
+      "generated": null,
+      "name": "processing_phase",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "idempotency_key",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "request_fingerprint",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "callback_state_hash",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "callback_expires_at",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "lease_token",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "lease_expires_at",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "draft_report_json",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "report_context_json",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "report_schema_version",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "methodology_versions_json",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "reference_at",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "input_hash",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "report_hash",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "last_error_code",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "approved_at",
+      "entityType": "columns",
+      "table": "purchases"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "report_entitlements"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "buyer_id",
+      "entityType": "columns",
+      "table": "report_entitlements"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "profile_id",
+      "entityType": "columns",
+      "table": "report_entitlements"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "report_year",
+      "entityType": "columns",
+      "table": "report_entitlements"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "environment",
+      "entityType": "columns",
+      "table": "report_entitlements"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "purchase_id",
+      "entityType": "columns",
+      "table": "report_entitlements"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "snapshot_id",
+      "entityType": "columns",
+      "table": "report_entitlements"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "granted_at",
+      "entityType": "columns",
+      "table": "report_entitlements"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "revoked_at",
+      "entityType": "columns",
+      "table": "report_entitlements"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "report_snapshots"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "purchase_id",
+      "entityType": "columns",
+      "table": "report_snapshots"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "profile_id",
+      "entityType": "columns",
+      "table": "report_snapshots"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "report_year",
+      "entityType": "columns",
+      "table": "report_snapshots"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "report_json",
+      "entityType": "columns",
+      "table": "report_snapshots"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "schema_version",
+      "entityType": "columns",
+      "table": "report_snapshots"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "methodology_versions_json",
+      "entityType": "columns",
+      "table": "report_snapshots"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "reference_at",
+      "entityType": "columns",
+      "table": "report_snapshots"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "input_hash",
+      "entityType": "columns",
+      "table": "report_snapshots"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "report_hash",
+      "entityType": "columns",
+      "table": "report_snapshots"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "report_snapshots"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "saju_profiles"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "table": "saju_profiles"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "birth_date",
+      "entityType": "columns",
+      "table": "saju_profiles"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "birth_time",
+      "entityType": "columns",
+      "table": "saju_profiles"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "gender",
+      "entityType": "columns",
+      "table": "saju_profiles"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "calendar_type",
+      "entityType": "columns",
+      "table": "saju_profiles"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "name": "is_leap_month",
+      "entityType": "columns",
+      "table": "saju_profiles"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "saju_profiles"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "table": "saju_profiles"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "saju_results"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "profile_id",
+      "entityType": "columns",
+      "table": "saju_results"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "result_json",
+      "entityType": "columns",
+      "table": "saju_results"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "saju_results"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "table": "saju_results"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "email",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "table": "users"
+    },
+    {
+      "columns": [
+        "user_id"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_auth_accounts_user_id_users_id_fk",
+      "entityType": "fks",
+      "table": "auth_accounts"
+    },
+    {
+      "columns": [
+        "buyer_id"
+      ],
+      "tableTo": "anonymous_buyers",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_purchases_buyer_id_anonymous_buyers_id_fk",
+      "entityType": "fks",
+      "table": "purchases"
+    },
+    {
+      "columns": [
+        "profile_id"
+      ],
+      "tableTo": "saju_profiles",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_purchases_profile_id_saju_profiles_id_fk",
+      "entityType": "fks",
+      "table": "purchases"
+    },
+    {
+      "columns": [
+        "buyer_id"
+      ],
+      "tableTo": "anonymous_buyers",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_report_entitlements_buyer_id_anonymous_buyers_id_fk",
+      "entityType": "fks",
+      "table": "report_entitlements"
+    },
+    {
+      "columns": [
+        "profile_id"
+      ],
+      "tableTo": "saju_profiles",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_report_entitlements_profile_id_saju_profiles_id_fk",
+      "entityType": "fks",
+      "table": "report_entitlements"
+    },
+    {
+      "columns": [
+        "purchase_id"
+      ],
+      "tableTo": "purchases",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_report_entitlements_purchase_id_purchases_id_fk",
+      "entityType": "fks",
+      "table": "report_entitlements"
+    },
+    {
+      "columns": [
+        "snapshot_id"
+      ],
+      "tableTo": "report_snapshots",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_report_entitlements_snapshot_id_report_snapshots_id_fk",
+      "entityType": "fks",
+      "table": "report_entitlements"
+    },
+    {
+      "columns": [
+        "purchase_id"
+      ],
+      "tableTo": "purchases",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_report_snapshots_purchase_id_purchases_id_fk",
+      "entityType": "fks",
+      "table": "report_snapshots"
+    },
+    {
+      "columns": [
+        "profile_id"
+      ],
+      "tableTo": "saju_profiles",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_report_snapshots_profile_id_saju_profiles_id_fk",
+      "entityType": "fks",
+      "table": "report_snapshots"
+    },
+    {
+      "columns": [
+        "user_id"
+      ],
+      "tableTo": "users",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_saju_profiles_user_id_users_id_fk",
+      "entityType": "fks",
+      "table": "saju_profiles"
+    },
+    {
+      "columns": [
+        "profile_id"
+      ],
+      "tableTo": "saju_profiles",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_saju_results_profile_id_saju_profiles_id_fk",
+      "entityType": "fks",
+      "table": "saju_results"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "anonymous_buyers_pk",
+      "table": "anonymous_buyers",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "auth_accounts_pk",
+      "table": "auth_accounts",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "purchases_pk",
+      "table": "purchases",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "report_entitlements_pk",
+      "table": "report_entitlements",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "report_snapshots_pk",
+      "table": "report_snapshots",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "saju_profiles_pk",
+      "table": "saju_profiles",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "saju_results_pk",
+      "table": "saju_results",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "users_pk",
+      "table": "users",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        {
+          "value": "token_hash",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "anonymous_buyers_token_hash_unique",
+      "entityType": "indexes",
+      "table": "anonymous_buyers"
+    },
+    {
+      "columns": [
+        {
+          "value": "provider",
+          "isExpression": false
+        },
+        {
+          "value": "provider_account_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "auth_accounts_provider_account_unique",
+      "entityType": "indexes",
+      "table": "auth_accounts"
+    },
+    {
+      "columns": [
+        {
+          "value": "user_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "auth_accounts_user_id_idx",
+      "entityType": "indexes",
+      "table": "auth_accounts"
+    },
+    {
+      "columns": [
+        {
+          "value": "partner_order_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "purchases_partner_order_id_unique",
+      "entityType": "indexes",
+      "table": "purchases"
+    },
+    {
+      "columns": [
+        {
+          "value": "provider",
+          "isExpression": false
+        },
+        {
+          "value": "environment",
+          "isExpression": false
+        },
+        {
+          "value": "cid",
+          "isExpression": false
+        },
+        {
+          "value": "tid",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "purchases_provider_tid_unique",
+      "entityType": "indexes",
+      "table": "purchases"
+    },
+    {
+      "columns": [
+        {
+          "value": "buyer_id",
+          "isExpression": false
+        },
+        {
+          "value": "environment",
+          "isExpression": false
+        },
+        {
+          "value": "idempotency_key",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "purchases_buyer_idempotency_unique",
+      "entityType": "indexes",
+      "table": "purchases"
+    },
+    {
+      "columns": [
+        {
+          "value": "buyer_id",
+          "isExpression": false
+        },
+        {
+          "value": "profile_id",
+          "isExpression": false
+        },
+        {
+          "value": "report_year",
+          "isExpression": false
+        },
+        {
+          "value": "environment",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": "\"purchases\".\"status\" IN ('ready', 'approved')",
+      "origin": "manual",
+      "name": "purchases_active_report_unique",
+      "entityType": "indexes",
+      "table": "purchases"
+    },
+    {
+      "columns": [
+        {
+          "value": "status",
+          "isExpression": false
+        },
+        {
+          "value": "processing_phase",
+          "isExpression": false
+        },
+        {
+          "value": "updated_at",
+          "isExpression": false
+        },
+        {
+          "value": "id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "purchases_processing_idx",
+      "entityType": "indexes",
+      "table": "purchases"
+    },
+    {
+      "columns": [
+        {
+          "value": "buyer_id",
+          "isExpression": false
+        },
+        {
+          "value": "profile_id",
+          "isExpression": false
+        },
+        {
+          "value": "report_year",
+          "isExpression": false
+        },
+        {
+          "value": "environment",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "report_entitlements_buyer_report_unique",
+      "entityType": "indexes",
+      "table": "report_entitlements"
+    },
+    {
+      "columns": [
+        {
+          "value": "purchase_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "report_entitlements_purchase_id_unique",
+      "entityType": "indexes",
+      "table": "report_entitlements"
+    },
+    {
+      "columns": [
+        {
+          "value": "purchase_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "report_snapshots_purchase_id_unique",
+      "entityType": "indexes",
+      "table": "report_snapshots"
+    },
+    {
+      "columns": [
+        {
+          "value": "user_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "name": "saju_profiles_user_id_idx",
+      "entityType": "indexes",
+      "table": "saju_profiles"
+    },
+    {
+      "columns": [
+        {
+          "value": "profile_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "saju_results_profile_id_unique",
+      "entityType": "indexes",
+      "table": "saju_results"
+    },
+    {
+      "columns": [
+        {
+          "value": "email",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "name": "users_email_unique",
+      "entityType": "indexes",
+      "table": "users"
+    },
+    {
+      "value": "\"provider\" = 'kakaopay'",
+      "name": "purchases_provider_check",
+      "entityType": "checks",
+      "table": "purchases"
+    },
+    {
+      "value": "\"environment\" IN ('test', 'live')",
+      "name": "purchases_environment_check",
+      "entityType": "checks",
+      "table": "purchases"
+    },
+    {
+      "value": "\"status\" IN ('ready', 'approved', 'failed', 'cancelled')",
+      "name": "purchases_status_check",
+      "entityType": "checks",
+      "table": "purchases"
+    },
+    {
+      "value": "\"processing_phase\" IN ('preparing', 'awaiting_user', 'approving', 'reconciling', 'complete')",
+      "name": "purchases_processing_phase_check",
+      "entityType": "checks",
+      "table": "purchases"
+    },
+    {
+      "value": "\"currency\" = 'KRW'",
+      "name": "purchases_currency_check",
+      "entityType": "checks",
+      "table": "purchases"
+    },
+    {
+      "value": "\"quantity\" = 1",
+      "name": "purchases_quantity_check",
+      "entityType": "checks",
+      "table": "purchases"
+    },
+    {
+      "value": "\n    typeof(\"expected_total_amount\") = 'integer' AND \"expected_total_amount\" > 0\n    AND typeof(\"expected_tax_free_amount\") = 'integer'\n    AND \"expected_tax_free_amount\" BETWEEN 0 AND \"expected_total_amount\"\n    AND (\"expected_vat_amount\" IS NULL OR (\n      typeof(\"expected_vat_amount\") = 'integer'\n      AND \"expected_vat_amount\" BETWEEN 0 AND \"expected_total_amount\" - \"expected_tax_free_amount\"\n    ))\n    AND (\"approved_total_amount\" IS NULL OR (\n      typeof(\"approved_total_amount\") = 'integer' AND \"approved_total_amount\" >= 0\n    ))\n  ",
+      "name": "purchases_amounts_check",
+      "entityType": "checks",
+      "table": "purchases"
+    },
+    {
+      "value": "\"environment\" IN ('test', 'live')",
+      "name": "report_entitlements_environment_check",
+      "entityType": "checks",
+      "table": "report_entitlements"
+    }
+  ],
+  "renames": []
+}

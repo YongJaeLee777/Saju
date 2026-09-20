@@ -18,10 +18,10 @@ const kstDate = (instant: number) => new Date(instant + 9 * 60 * 60 * 1000).toIS
 const kstDateTime = (value: string) => new Date(Date.parse(value) + 9 * 60 * 60 * 1000).toISOString().slice(0, 16).replace('T', ' ')
 const periodLabel = (start: string, end: string) => `${kstDateTime(start)} ~ ${kstDateTime(end)} (한국시간, 종료 시각 미포함)`
 
-/** Server-only composition. The page receives display fields, never raw evidence.
+/** Complete server-only report, also used to freeze payment drafts.
  * Select current daewoon by exact [start, end); annual luck is explicitly 2026.
  */
-export function buildResultPageData(input: SajuInput, now: Date = new Date()) {
+export function buildResultReport(input: SajuInput, now: Date = new Date()) {
   const instant = now.getTime()
   if (!Number.isFinite(instant)) throw new RangeError('유효하지 않은 기준 시각입니다.')
   const natal = calculateSaju(input)
@@ -68,6 +68,15 @@ export function buildResultPageData(input: SajuInput, now: Date = new Date()) {
     daewoonNotice: daewoon ? null : !input.birthTime
       ? '출생시간을 몰라 현재 대운을 확정할 수 없습니다.'
       : '기준 시각에 해당하는 대운 정보를 확인할 수 없습니다.',
+    report,
+  }
+}
+
+/** Only display fields cross the page boundary. */
+export function buildResultPageData(input: SajuInput, now: Date = new Date()) {
+  const { report, ...display } = buildResultReport(input, now)
+  return {
+    ...display,
     report: {
       title: report.title, intro: report.intro, closing: report.closing,
       sections: report.sections.map(({ topic, headline, body, scopeLabel }) => ({ topic, headline, body, scopeLabel })),

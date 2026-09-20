@@ -1,71 +1,60 @@
-# 다음 세션 메모
+﻿# Next Session — 2026-09-20
 
-## 현재 목표
+## Kakao Pay 작업 완료 상태
 
-Kakao Pay 단건결제 MVP 흐름을 `ready → approve → entitlement/snapshot` 순서로 완성한다.
+- Kakao Pay ready 실연동 성공.
+- Kakao Pay WEB 플랫폼 도메인 등록 완료.
+- production KAKAOPAY_CALLBACK_ORIGIN: `https://saju.dydcks4.workers.dev`
+- production `KAKAOPAY_SECRET_KEY` 등록 완료. 실제 Secret 값은 기록하지 않음.
+- remote D1 `saju-db`에 기존 migration 4개를 순서대로 적용 완료.
+- remote 앱 테이블 8개 존재:
+  - `users`, `auth_accounts`, `saju_profiles`, `saju_results`
+  - `anonymous_buyers`, `purchases`, `report_snapshots`, `report_entitlements`
+- callback 3개 배포 및 검증 완료:
+  - `/api/payments/kakaopay/approval`: 토큰 없는 GET → HTTP 400
+  - `/api/payments/kakaopay/cancel`: GET → HTTP 200
+  - `/api/payments/kakaopay/fail`: GET → HTTP 200
+- approve 서버 로직 구현 완료: callback state 검증, DB 저장 식별자 사용, 승인 응답 검증, snapshot/entitlement 생성 및 purchase 완료 처리.
+- 중복 callback 보호 및 불확실한 승인 결과의 reconciling 처리 구현.
+- 현재 배포 환경에서 테스트 CID `TC0ONETIME`을 사용한 mock 결제까지 검증됨. 운영 결제 전환은 아직 하지 않음.
 
-## 현재까지 구현된 것
+## 전체 회귀 결과
 
-- payment DB 테이블 4개: `anonymous_buyers`, `purchases`, `report_snapshots`, `report_entitlements`
-- anonymous buyer 생성·해시 저장·쿠키 인증
-- entitlement 인증 후 snapshot을 조회하는 서버 전용 access 함수
-- Kakao ready service와 `POST /api/payments/kakaopay/ready` route
-- 테스트 결제 CID `TC0ONETIME`, deterministic report draft freeze
-- DEV 환경에서 `localhost`/`127.0.0.1` HTTP callback origin 허용
-- DEV 전용 outbound diagnostic route: Kakao와 `example.com` HTTPS HEAD 비교
-- ready fetch의 redirect 옵션은 `manual`
+- check / typecheck 통과.
+- 37 test files / 594 tests 통과.
+- build 성공.
+- 위 결과는 사용자가 전체 회귀 완료를 확인한 결과이며, 문서 갱신 과정에서 재실행하지 않음.
 
-## 아직 하지 않은 것
+## 실제 E2E 최종 성공 상태
 
-- remote migration은 아직 하지 않음
-- approve 구현 안 함
-- callback 구현 안 함
-- 결제 UI 구현 안 함
-- rate limit 구현 안 함
+1. 우리 production ready route 호출 → HTTP 200.
+2. purchase → `ready / awaiting_user`.
+3. 사용자가 Kakao mock 결제 진행.
+4. approval callback → `{"received":true,"approved":true}` 확인.
+5. remote D1 최종 상태를 읽기 전용으로 확인:
+   - purchase: `approved / complete`
+   - `last_error_code`: `null`
+   - `approved_at`: 존재
+   - 해당 purchase의 `report_snapshots`: 1개
+   - 해당 purchase의 `report_entitlements`: 1개
+   - snapshot / entitlement의 purchase / profile / year 연결 일치
+   - 중복 row 없음
 
-## 핵심 진단 결과
+Kakao Pay mock 결제 E2E 성공: ready → 사용자 결제 → approve → snapshot / entitlement 저장까지 확인 완료.
 
-1. 최초 ready 실호출: HTTP 502, purchase `ready / reconciling`, `last_error_code=provider-network`
-2. 오류 분류 세분화 후: `provider-network-fetch-typeerror-unknown`
-3. 같은 Worker runtime outbound 진단:
-   - Kakao HEAD: `fetchSucceeded=true`, HTTP 404
-   - `example.com`: `fetchSucceeded=true`, HTTP 200
-   - outbound/TLS 자체는 정상
-4. ready fetch의 `redirect: 'error'`를 `redirect: 'manual'`로 변경
-5. 변경 후 ready 실호출: HTTP 502, 새 purchase 생성, `failed / complete`, `last_error_code=provider-rejected`, `tid=false`, entitlement/snapshot 미생성
-6. 이전 TypeError의 직접 원인은 redirect 처리였고, 현재는 Kakao 서버까지 도달한 뒤 400/401/403/422 중 하나로 거절되는 단계
+참고: 최초 ready는 redirectUrl을 보존하지 않아 미사용 상태로 종료함. 사용자 미방문·미인증 확인 및 DB 미승인·접근권한 미생성 확인 후 해당 purchase만 `cancelled / complete`로 종료하고 callback을 만료 처리함. Kakao cancel API는 호출하지 않음. 이후 새 ready 1회로 위 E2E를 완료함.
 
-## 다음 시작점
+## 보안 기록 원칙
 
-- 실제 ready 재호출 전에 `provider-rejected` 진단을 최소 보강
-- HTTP status와 Kakao JSON의 numeric `error_code`만 안전하게 `last_error_code`에 남김
-- `error_message`, extras, response body 원문은 저장·로그하지 않음
-- 기존 `failed / complete` 및 외부 502 정책 유지
-- 수정 후 사용자가 dev 서버를 재시작
-- ready를 정확히 1회 호출
-- `error_code` 기준으로 Secret Key/API 권한/도메인/요청값 원인 확정
+- pg_token / order / state / tid 실제값 및 Secret Key는 기록하지 않음.
+- 실제 redirectUrl, provider 응답 원문, report JSON 전문도 이 문서에 보관하지 않음.
 
-## 보안·운영 상태
+## 남은 TODO
 
-- secret, Authorization, tid, orderId 전체값 로그 금지
-- `pg_token` 저장·로그 금지
-- ready 재시도 남발 금지
-- remote migration 금지 상태
-- 공개 운영 전 rate limit과 Turnstile 필요
-- paid unlock은 approval_url 도착이 아니라 server approve와 verify 이후
-- D1 full scan 금지; entitlement 먼저 확인 후 snapshot 조회
-
-## 현재 테스트 상태
-
-- redirect manual 변경 후 service 57개, route 39개, 총 96개 통과
-- 이후 실제 ready 1회 호출로 `provider-rejected` 확인
-- full regression은 다시 돌리지 않음
-
-## 기존 프로젝트 메모
-
-- deterministic report 파이프라인 완료
-- LLM은 실험과 semantic guard/deterministic fallback 구현까지 완료했으며 MVP 기본 사용은 보류
-- `/result/[id]`에 DB profile → 계산 → 대운/2026 세운 → Facts → Signals → TopicSummary → renderer → deterministic report 연결 완료
-- 대표 1991-01-02 13:04 여성 화면 검증 완료
-- 일반 작업에서 `SAJU_DEVELOPMENT_LOG.md`는 읽지 않음
-- 작은 작업은 관련 파일과 관련 테스트만 실행
+1. cancel / fail 상태 처리 보강.
+2. reconciling 복구 처리.
+3. 결제 UI 연결.
+4. rate limit + Turnstile.
+5. 플랫폼 로그의 token / query 수집 여부 점검.
+6. 운영 결제 전환 시 실제 CID / 운영 Secret / 가맹 계약 확인.
+7. saju-session KV / Images binding 비용 및 필요성 점검.

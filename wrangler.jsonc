@@ -3,6 +3,9 @@
 	"compatibility_date": "2026-09-08",
 	"compatibility_flags": ["global_fetch_strictly_public"],
 	"name": "saju",
+	"vars": {
+		"KAKAOPAY_CALLBACK_ORIGIN": "https://saju.dydcks4.workers.dev"
+	},
 	"main": "@astrojs/cloudflare/entrypoints/server",
 	"assets": {
 		"directory": "./dist",

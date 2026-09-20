@@ -177,7 +177,7 @@ export async function readyKakaoPayReport(context: Context): Promise<ReadyResult
             headers: { Authorization: `SECRET_KEY ${secret}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ cid, partner_order_id: orderId, partner_user_id: buyer.id,
               item_name: itemName, quantity: 1, total_amount: amount, tax_free_amount: 0,
-              approval_url: callback('success'), cancel_url: callback('cancel'), fail_url: callback('fail') }),
+              approval_url: callback('approval'), cancel_url: callback('cancel'), fail_url: callback('fail') }),
             })
           } catch (error) {
             debug = networkDebug(error, 'fetch')

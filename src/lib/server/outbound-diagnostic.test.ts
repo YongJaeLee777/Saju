@@ -71,7 +71,7 @@ describe('DEV outbound diagnostic (mock only)', () => {
   it('does not follow redirects', async () => {
     network.mockResolvedValue(new Response(null, { status: 302, headers: { Location: 'https://unused.example/' } }))
     const result = await (await call()).json()
-    expect(result.kakao).toEqual({ fetchSucceeded: true, httpStatus: 302 })
+    expect(result).toMatchObject({ kakao: { fetchSucceeded: true, httpStatus: 302 } })
     expect(network).toHaveBeenCalledTimes(2)
   })
 

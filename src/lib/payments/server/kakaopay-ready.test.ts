@@ -186,7 +186,7 @@ describe('test Kakao Pay ready (mock only)', () => {
     expect(body).toMatchObject({ item_name: '2026년 사주 상세 리포트', quantity: 1, total_amount: 1000 })
     expect(body.partner_order_id).toBe(row?.partner_order_id)
     expect(row?.idempotency_key).not.toBe(body.partner_order_id)
-    for (const [field, path] of [['approval_url', 'success'], ['cancel_url', 'cancel'], ['fail_url', 'fail']]) {
+    for (const [field, path] of [['approval_url', 'approval'], ['cancel_url', 'cancel'], ['fail_url', 'fail']]) {
       expect(new URL(body[field!]).pathname).toBe(`/api/payments/kakaopay/${path}`)
     }
     const state = new URL(body.approval_url).searchParams.get('state')!

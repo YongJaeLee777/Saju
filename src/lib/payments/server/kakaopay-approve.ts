@@ -3,13 +3,11 @@ import { env } from 'cloudflare:workers'
 import { and, eq, gt } from 'drizzle-orm'
 import type { createDb } from '../../../db/client'
 import { purchases, reportEntitlements, reportSnapshots } from '../../../db/schema'
+import { callbackPurchaseFilter } from './callback-purchase'
 
 type Context = { db: ReturnType<typeof createDb>; order: string; state: string; pgToken: string }
-type Result = { ok: true } | { ok: false; code: 'invalid-callback' | 'configuration' | 'pending' | 'provider-failed' | 'storage-error' }
+type Result = { ok: true; profileId: string } | { ok: false; code: 'invalid-callback' | 'configuration' | 'pending' | 'provider-failed' | 'storage-error' }
 const record = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
-const hash = async (value: string) => Array.from(new Uint8Array(
-  await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)),
-), (byte) => byte.toString(16).padStart(2, '0')).join('')
 
 /** Test CID only. Tokens live only in memory; no provider payloads or exceptions are logged. */
 export async function approveKakaoPayReport({ db, order, state, pgToken }: Context): Promise<Result> {
@@ -26,13 +24,11 @@ export async function approveKakaoPayReport({ db, order, state, pgToken }: Conte
       eq(purchases.processingPhase, 'approving'), eq(purchases.leaseToken, owned.lease)))
   }
   try {
-    const [purchase] = await db.select().from(purchases).where(and(
-      eq(purchases.partnerOrderId, order), eq(purchases.callbackStateHash, await hash(state)),
-      eq(purchases.provider, 'kakaopay'), eq(purchases.environment, 'test'), eq(purchases.cid, 'TC0ONETIME'),
-      gt(purchases.callbackExpiresAt, new Date()),
-    )).limit(1)
+    const filter = await callbackPurchaseFilter(order, state)
+    if (!filter) return { ok: false, code: 'invalid-callback' }
+    const [purchase] = await db.select().from(purchases).where(filter).limit(1)
     if (!purchase) return { ok: false, code: 'invalid-callback' }
-    if (purchase.status === 'approved' && purchase.processingPhase === 'complete') return { ok: true }
+    if (purchase.status === 'approved' && purchase.processingPhase === 'complete') return { ok: true, profileId: purchase.profileId }
     if (purchase.status !== 'ready' || purchase.processingPhase !== 'awaiting_user') return { ok: false, code: 'pending' }
     if (!purchase.tid || !purchase.draftReportJson) return { ok: false, code: 'invalid-callback' }
     const secret = env.KAKAOPAY_SECRET_KEY
@@ -106,7 +102,7 @@ export async function approveKakaoPayReport({ db, order, state, pgToken }: Conte
       }).where(and(eq(purchases.id, purchase.id), eq(purchases.status, 'ready'),
         eq(purchases.processingPhase, 'approving'), eq(purchases.leaseToken, lease))),
     ])
-    return { ok: true }
+    return { ok: true, profileId: purchase.profileId }
   } catch {
     try { await saveFailure('storage-error') } catch { /* Keep the existing claim blocked; no retries. */ }
     return { ok: false, code: 'storage-error' }

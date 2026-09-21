@@ -7,6 +7,7 @@ import type { AstroCookieSetOptions } from 'astro'
 import { createDb } from '../../../db/client'
 import { anonymousBuyers, purchases, reportEntitlements, reportSnapshots, sajuProfiles } from '../../../db/schema'
 import { findReportEntitlement, getOrCreateAnonymousBuyer, loadEntitledReportSnapshot } from './report-access'
+import { loadPaidReport } from './paid-report'
 
 vi.mock('astro:env/server', () => ({}))
 
@@ -132,6 +133,37 @@ describe('anonymous buyer authentication', () => {
 })
 
 describe('report entitlement and snapshot access', () => {
+  it('supplies the frozen snapshot display text even after the profile changes', async () => {
+    const { ctx } = await paidFixture()
+    const report = { title: '구매 당시 제목', intro: '구매 당시 안내', closing: '구매 당시 마무리',
+      sections: [{ headline: '고정된 제목', body: '구매 당시 유료 본문', scopeLabel: '올해' }] }
+    await db.update(reportSnapshots).set({ reportJson: JSON.stringify({ ...report,
+      provenance: ['private internal evidence'], edition: 'free' }) })
+    await db.update(sajuProfiles).set({ birthDate: '2000-01-01' })
+    queries.length = 0
+    const display = await loadPaidReport(ctx)
+    expect(display).toEqual({ entitled: true, report })
+    expect(JSON.stringify(display)).not.toMatch(/provenance|private internal evidence/)
+    expect(queries).toHaveLength(3)
+    expect(queries.join(' ')).not.toContain('saju_profiles')
+  })
+
+  it('returns no paid display content and does not query snapshots without entitlement', async () => {
+    const { ctx } = await paidFixture()
+    await db.delete(reportEntitlements)
+    queries.length = 0
+    const display = await loadPaidReport(ctx)
+    expect(display).toEqual({ entitled: false, report: null })
+    expect(JSON.stringify(display)).not.toContain('paid body')
+    expect(queries.join(' ')).not.toContain('report_snapshots')
+  })
+
+  it('keeps access but does not regenerate or expose malformed stored report JSON', async () => {
+    const { ctx } = await paidFixture()
+    await db.update(reportSnapshots).set({ reportJson: '{broken private data' })
+    expect(await loadPaidReport(ctx)).toEqual({ entitled: true, report: null })
+  })
+
   it('returns only entitlement metadata without reading report JSON', async () => {
     const { ctx } = await paidFixture()
     expect(await findReportEntitlement(ctx)).toEqual({ snapshotId: 'snapshot', purchaseId: 'purchase' })

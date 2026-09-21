@@ -76,10 +76,12 @@ afterAll(async () => { await mf?.dispose() })
 
 describe('approve callback (mock provider, local D1)', () => {
   it('uses stored identifiers, approves and atomically freezes the draft and grants access', async () => {
-    const res = await call(`order=order&state=${state}&pg_token=mock-token&tid=evil&partner_order_id=evil&partner_user_id=evil`)
+    const res = await call(`order=order&state=${state}&pg_token=mock-token&tid=evil&partner_order_id=evil&partner_user_id=evil&profileId=evil`)
     expect(prerender).toBe(false)
-    expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ received: true, approved: true })
+    expect(res.status).toBe(303)
+    expect(res.headers.get('Location')).toBe('/result/profile')
+    expect(res.headers.get('Location')).not.toMatch(/pg_token|state|order|mock-token|evil/)
+    expect(await res.text()).toBe('')
     expect(res.headers.get('Cache-Control')).toBe('private, no-store')
     expect(res.headers.get('Referrer-Policy')).toBe('no-referrer')
     expect(res.headers.has('Access-Control-Allow-Origin')).toBe(false)
@@ -146,8 +148,10 @@ describe('approve callback (mock provider, local D1)', () => {
 
   it('makes one approve call for concurrent and repeated callbacks', async () => {
     const results = await Promise.all([call(), call()])
-    expect(results.map((res) => res.status)).toContain(200)
-    expect((await call()).status).toBe(200)
+    expect(results.map((res) => res.status)).toContain(303)
+    const repeated = await call()
+    expect(repeated.status).toBe(303)
+    expect(repeated.headers.get('Location')).toBe('/result/profile')
     expect(network).toHaveBeenCalledTimes(1)
     expect(await db.select().from(reportSnapshots)).toHaveLength(1)
     expect(await db.select().from(reportEntitlements)).toHaveLength(1)

@@ -1,60 +1,85 @@
-﻿# Next Session — 2026-09-20
+﻿# 다음 세션 인수인계
 
-## Kakao Pay 작업 완료 상태
+기준일: 2026-09-28
+결제 E2E·운영 설정·전체 회귀 상태는 사용자 확인 내용을 기준으로 기록했다. 메인 UI 완료 상태는 현재 코드를 확인했다.
 
-- Kakao Pay ready 실연동 성공.
-- Kakao Pay WEB 플랫폼 도메인 등록 완료.
-- production KAKAOPAY_CALLBACK_ORIGIN: `https://saju.dydcks4.workers.dev`
-- production `KAKAOPAY_SECRET_KEY` 등록 완료. 실제 Secret 값은 기록하지 않음.
-- remote D1 `saju-db`에 기존 migration 4개를 순서대로 적용 완료.
-- remote 앱 테이블 8개 존재:
-  - `users`, `auth_accounts`, `saju_profiles`, `saju_results`
-  - `anonymous_buyers`, `purchases`, `report_snapshots`, `report_entitlements`
-- callback 3개 배포 및 검증 완료:
-  - `/api/payments/kakaopay/approval`: 토큰 없는 GET → HTTP 400
-  - `/api/payments/kakaopay/cancel`: GET → HTTP 200
-  - `/api/payments/kakaopay/fail`: GET → HTTP 200
-- approve 서버 로직 구현 완료: callback state 검증, DB 저장 식별자 사용, 승인 응답 검증, snapshot/entitlement 생성 및 purchase 완료 처리.
-- 중복 callback 보호 및 불확실한 승인 결과의 reconciling 처리 구현.
-- 현재 배포 환경에서 테스트 CID `TC0ONETIME`을 사용한 mock 결제까지 검증됨. 운영 결제 전환은 아직 하지 않음.
+## 오늘 완료한 작업
 
-## 전체 회귀 결과
+### Kakao Pay 결제 흐름
+- Kakao Pay happy path E2E 성공.
+- ready → mock 결제 → approval → approve → snapshot → entitlement 정상.
+- 결제 완료 후 DB purchase.profile_id를 사용해 `/result/{profileId}`로 자동 303 복귀.
+- 모바일에서도 결제 완료 후 자동 복귀 확인.
+- entitlement 보유 시 구매 당시 저장된 paid snapshot의 report_json 표시.
+- entitlement 확인 후에만 snapshot 조회. 권한 없으면 무료 결과와 구매 버튼 유지하며 paid 내용은 HTML/JSON에 포함하지 않음.
+- 기존 구매 결과는 현재 엔진으로 재계산하지 않음.
+- 복귀 URL에는 callback 인증값을 포함하지 않으며 Cache-Control: private, no-store 유지.
+- ready 성공 후 요청 User-Agent에 따라 Kakao Pay redirect URL을 선택하도록 변경.
+  - 모바일 UA: `next_redirect_mobile_url`
+  - 데스크톱 UA: `next_redirect_pc_url`
+  - 모바일 URL이 없거나 유효하지 않으면 PC URL로 fallback
+  - 모바일 판별: `/iPhone|iPad|Android|Mobile/i`
 
-- check / typecheck 통과.
-- 37 test files / 594 tests 통과.
-- build 성공.
-- 위 결과는 사용자가 전체 회귀 완료를 확인한 결과이며, 문서 갱신 과정에서 재실행하지 않음.
+### cancel/fail callback
+- 상태 처리 구현 완료.
+- ready / awaiting_user만 cancel → cancelled / complete, fail → failed / complete로 처리.
+- approved 및 terminal 상태 보호.
+- approving / reconciling은 409.
+- entitlement / snapshot 생성 없음.
+- cancel/fail 실제 E2E는 필요 시 추가 확인.
 
-## 실제 E2E 최종 성공 상태
+### 검증
+- cancel/fail 반영 후 전체 회귀: check/typecheck 통과, 37 files / 614 tests 통과, build 성공.
+- 이후 approval redirect 및 snapshot 접근 관련 테스트: 2 files / 41 tests 통과.
+- 결제 UI 관련 테스트: 1 file / 5 tests 통과.
+- 메인 UI 변경 시 기존 제출 스크립트, 입력 필드 속성 및 선택 옵션 불변 확인.
+- 위 전체 회귀 결과를 이후 모든 UI 변경까지 재실행한 결과로 해석하지 말 것.
+- Kakao Pay redirect 분기 관련 ready 테스트: 2 files / 99 tests 통과.
 
-1. 우리 production ready route 호출 → HTTP 200.
-2. purchase → `ready / awaiting_user`.
-3. 사용자가 Kakao mock 결제 진행.
-4. approval callback → `{"received":true,"approved":true}` 확인.
-5. remote D1 최종 상태를 읽기 전용으로 확인:
-   - purchase: `approved / complete`
-   - `last_error_code`: `null`
-   - `approved_at`: 존재
-   - 해당 purchase의 `report_snapshots`: 1개
-   - 해당 purchase의 `report_entitlements`: 1개
-   - snapshot / entitlement의 purchase / profile / year 연결 일치
-   - 중복 row 없음
+### 결제 UI
+- 개선 완료.
+- 무료: 안내문, 1,000원 가격, 상세 리포트 보기 CTA, 카카오페이 테스트 결제 문구.
+- 유료: 작은 권한 안내와 paid snapshot 카드, 제목/본문 계층 및 여백 개선.
+- 저장된 paid 텍스트 유지, 기존 loading/error 동작 유지.
 
-Kakao Pay mock 결제 E2E 성공: ready → 사용자 결제 → approve → snapshot / entitlement 저장까지 확인 완료.
+### 메인 / UI
+- 현재 src/pages/index.astro 기준 리디자인 구현 완료.
+- 서비스명과 “생년월일로 보는 나의 사주 흐름” hero, 보조 설명.
+- 밝은 neutral 배경, 따뜻한 포인트 컬러, 둥근 입력 카드와 얕은 border/shadow.
+- 모바일 1열, 540px 이상 입력 2열, 중앙 max-width 680px.
+- 날짜/시간/성별/양력·음력/윤달 기존 입력 유지.
+- CTA “사주 결과 보기”, 무료 기본 결과 및 상세 리포트 선택 안내.
+- 기존 form submit, profile 생성 API, 결과 라우팅 유지.
+- 기존 메인 제출 스크립트에는 별도 loading/disabled 전환 처리가 없으며 이번 UI 작업에서도 동작을 추가하지 않음.
+- 외부 폰트/이미지/UI 라이브러리 추가 없음. result 페이지 변경 없음.
+- 메인 UI의 최신 production 배포 여부는 별도 확인 필요.
 
-참고: 최초 ready는 redirectUrl을 보존하지 않아 미사용 상태로 종료함. 사용자 미방문·미인증 확인 및 DB 미승인·접근권한 미생성 확인 후 해당 purchase만 `cancelled / complete`로 종료하고 callback을 만료 처리함. Kakao cancel API는 호출하지 않음. 이후 새 ready 1회로 위 E2E를 완료함.
+## 현재 운영 상태
 
-## 보안 기록 원칙
+- remote D1 migration 4개 적용 완료.
+- production KAKAOPAY_SECRET_KEY 등록 완료. 실제 값은 기록하지 않음.
+- callback origin: https://saju.dydcks4.workers.dev
+- WEB 플랫폼 도메인 등록 완료.
+- 현재 결제는 TC0ONETIME 테스트 CID.
+- git push는 사용자 측에서 이미 완료된 상태.
+- 배포 명령: `npx wrangler deploy`
+- 배포 후 모바일에서 QR 화면 대신 모바일 결제 흐름으로 진입하는지 확인 필요.
+- 데스크톱에서는 기존 PC/QR 결제 흐름이 유지되는지 확인 필요.
+- 이번 인수인계 갱신에서는 코드 수정, Git 작업, 배포, migration을 수행하지 않음.
 
-- pg_token / order / state / tid 실제값 및 Secret Key는 기록하지 않음.
-- 실제 redirectUrl, provider 응답 원문, report JSON 전문도 이 문서에 보관하지 않음.
+## 다음 우선순위
 
-## 남은 TODO
+1. 모바일 실제 결제 UX 확인.
+2. 공개 endpoint rate limit + Turnstile: profile 생성 및 ready 등 공개 쓰기/외부 호출 진입점부터 점검.
+3. reconciling 복구.
+4. 운영 CID / 운영 Secret 전환 준비.
+5. saju-session KV / Images binding 비용 및 필요성 점검.
 
-1. cancel / fail 상태 처리 보강.
-2. reconciling 복구 처리.
-3. 결제 UI 연결.
-4. rate limit + Turnstile.
-5. 플랫폼 로그의 token / query 수집 여부 점검.
-6. 운영 결제 전환 시 실제 CID / 운영 Secret / 가맹 계약 확인.
-7. saju-session KV / Images binding 비용 및 필요성 점검.
+다음 세션 시작 작업: 배포 후 모바일에서 QR 화면 대신 Kakao Pay 모바일 결제 흐름으로 진입하는지 확인한다.
+
+## 보안 및 작업 범위
+
+- Secret Key / pg_token / tid / order / state 실제값을 문서, 로그, 응답에 기록하지 말 것.
+- query param으로 유료 접근 권한을 판단하지 말 것.
+- 테스트 CID E2E 성공과 운영 결제 전환 준비를 구분할 것.
+- 일반 개발 지침은 AGENTS.md만 사용하고 다른 문서는 사용자가 명시적으로 요청한 범위에서만 읽을 것.

@@ -26,19 +26,42 @@ describe('report purchase UI', () => {
     expect(button.disabled).toBe(true)
   })
 
-  it.each(['http', 'network', 'invalid-url', 'invalid-json'])('shows only a generic error for %s failure', async (failure) => {
+  it.each(['http', 'network', 'invalid-response', 'invalid-json'])('shows an API/response error for %s failure', async (failure) => {
     vi.stubGlobal('fetch', vi.fn(async () => {
       if (failure === 'network') throw new Error('provider tid/order details')
       if (failure === 'http') return Response.json({ message: 'provider tid/order details' }, { status: 502 })
       if (failure === 'invalid-json') return new Response('invalid')
-      return Response.json({ redirectUrl: 'javascript:alert(1)' })
+      return Response.json({})
     }))
     const button = { disabled: false }
     const message = { textContent: '' }
     const navigate = vi.fn()
     await startReportPurchase(button, message, 'profile', navigate)
     expect(button.disabled).toBe(false)
-    expect(message.textContent).toBe('결제를 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.')
+    expect(message.textContent).toBe('결제를 시작할 수 없습니다.')
     expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it.each(['not-a-url', 'javascript:alert(1)', 'https://example.com/payment'])('shows a URL validation error for an invalid redirect %#', async (redirectUrl) => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ redirectUrl })))
+    const button = { disabled: false }
+    const message = { textContent: '' }
+    const navigate = vi.fn()
+    await startReportPurchase(button, message, 'profile', navigate)
+    expect(message.textContent).toBe('결제 주소를 확인할 수 없습니다.')
+    expect(button.disabled).toBe(false)
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it('shows a navigation error when navigation throws synchronously', async () => {
+    const redirectUrl = 'https://online-payment.kakaopay.com/mockup/example'
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ redirectUrl })))
+    const button = { disabled: false }
+    const message = { textContent: '' }
+    const navigate = vi.fn(() => { throw new Error('private navigation details') })
+    await startReportPurchase(button, message, 'profile', navigate)
+    expect(message.textContent).toBe('결제 화면으로 이동하지 못했습니다.')
+    expect(button.disabled).toBe(false)
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(redirectUrl)
   })
 })

@@ -207,8 +207,9 @@ export async function readyKakaoPayReport(context: Context): Promise<ReadyResult
         return await saveFailure('provider-response-invalid')
       }
       tid = result.data.tid
-      const url = redirectUrl(context.redirectTarget === 'mobile'
-        ? result.data.next_redirect_mobile_url : result.data.next_redirect_pc_url)
+      const pcUrl = redirectUrl(result.data.next_redirect_pc_url)
+      const url = context.redirectTarget === 'mobile'
+        ? redirectUrl(result.data.next_redirect_mobile_url) ?? pcUrl : pcUrl
       if (!url) return await saveFailure('provider-response-invalid')
       try {
         const saved = await context.db.update(purchases).set({

@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm'
 import type { AstroCookieSetOptions } from 'astro'
 import { createDb } from '../../../db/client'
 import { anonymousBuyers, purchases, reportEntitlements, reportSnapshots, sajuProfiles } from '../../../db/schema'
-import { findReportEntitlement, getOrCreateAnonymousBuyer, loadEntitledReportSnapshot } from './report-access'
+import { findReportEntitlement, getOrCreateAnonymousBuyer, loadEntitledReportSnapshot, prepareAnonymousBuyerRateLimit } from './report-access'
 import { loadPaidReport } from './paid-report'
 
 vi.mock('astro:env/server', () => ({}))
@@ -91,6 +91,21 @@ beforeEach(async () => {
 afterAll(async () => { await mf?.dispose() })
 
 describe('anonymous buyer authentication', () => {
+  it('prepares a hashed rate key before D1 and issues a new buyer only after approval', async () => {
+    const ctx = context()
+    const identity = await prepareAnonymousBuyerRateLimit(ctx)
+    expect(queries).toHaveLength(0)
+    expect(ctx.cookies.set).not.toHaveBeenCalled()
+    await identity.issueBuyer?.(db)
+    const token = ctx.cookies.values.get(cookieKey)!
+    expect(identity.key).toBe(digest(token))
+    expect(identity.key).not.toBe(token)
+    queries.length = 0
+    expect(await prepareAnonymousBuyerRateLimit(ctx)).toEqual({ key: identity.key })
+    expect(queries).toHaveLength(0)
+    expect(ctx.cookies.set).toHaveBeenCalledTimes(1)
+  })
+
   it('creates a 256-bit cookie and persists only its SHA-256 hash', async () => {
     const ctx = context()
     const buyer = await getOrCreateAnonymousBuyer(ctx)

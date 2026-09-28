@@ -2,10 +2,13 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { POST } from '../../../pages/api/payments/kakaopay/ready'
 import { readyKakaoPayReport } from './kakaopay-ready'
 import { createDb } from '../../../db/client'
+import { prepareAnonymousBuyerRateLimit } from './report-access'
 
-vi.mock('cloudflare:workers', () => ({ env: { saju_db: {} } }))
+const { readyLimit } = vi.hoisted(() => ({ readyLimit: vi.fn() }))
+vi.mock('cloudflare:workers', () => ({ env: { saju_db: {}, READY_RATE_LIMIT: { limit: readyLimit } } }))
 vi.mock('../../../db/client', () => ({ createDb: vi.fn(() => ({ mockedDb: true })) }))
 vi.mock('./kakaopay-ready', () => ({ readyKakaoPayReport: vi.fn() }))
+vi.mock('./report-access', () => ({ prepareAnonymousBuyerRateLimit: vi.fn() }))
 
 const profileId = 'de305d54-75b4-431b-adb2-eb6b9e546014'
 const cookies = { get: vi.fn(), set: vi.fn() }
@@ -24,6 +27,8 @@ async function call(req = request()) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(prepareAnonymousBuyerRateLimit).mockResolvedValue({ key: 'a'.repeat(64) })
+  readyLimit.mockResolvedValue({ success: true })
   vi.mocked(readyKakaoPayReport).mockResolvedValue({ ok: true,
     redirectUrl: 'https://online-pay.kakaopay.com/redirect', cacheControl: 'private, no-store' })
   vi.stubGlobal('fetch', vi.fn(() => { throw new Error('Real network calls are forbidden in this test') }))
@@ -41,12 +46,30 @@ describe('POST /api/payments/kakaopay/ready', () => {
     expect(await response.json()).toEqual({ message: '요청을 처리할 수 없습니다.' })
   })
 
-  it('passes the cookie adapter and fixed year, returning only the redirect URL', async () => {
-    const response = await call(request({ profileId }, { 'Sec-Fetch-Site': 'same-origin' }))
+  it.each([
+    ['Android', 'Mozilla/5.0 (Linux; Android 15; Pixel 9)', 'mobile'],
+    ['iPhone', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)', 'mobile'],
+    ['desktop', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'pc'],
+  ] as const)('selects the %s redirect target and returns only the redirect URL', async (_name, userAgent, redirectTarget) => {
+    const response = await call(request({ profileId }, {
+      'Sec-Fetch-Site': 'same-origin', 'User-Agent': userAgent,
+    }))
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ redirectUrl: 'https://online-pay.kakaopay.com/redirect' })
-    expect(readyKakaoPayReport).toHaveBeenCalledWith({ db: { mockedDb: true }, cookies, profileId, reportYear: 2026 })
+    expect(readyKakaoPayReport).toHaveBeenCalledWith({
+      db: { mockedDb: true }, cookies, profileId, reportYear: 2026, redirectTarget,
+    })
     expect(readyKakaoPayReport).toHaveBeenCalledTimes(1)
+    expect(readyLimit).toHaveBeenCalledWith({ key: 'a'.repeat(64) })
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('returns 429 before the ready service or Kakao call when limited', async () => {
+    readyLimit.mockResolvedValue({ success: false })
+    const response = await call()
+    expect(response.status).toBe(429)
+    expect(readyKakaoPayReport).not.toHaveBeenCalled()
+    expect(createDb).not.toHaveBeenCalled()
     expect(fetch).not.toHaveBeenCalled()
   })
 

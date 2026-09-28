@@ -201,6 +201,14 @@ describe('test Kakao Pay ready (mock only)', () => {
       redirectUrl: 'https://online-pay.kakaopay.com/mock-mobile' })
   })
 
+  it('falls back to the PC redirect when the mobile redirect is missing', async () => {
+    network.mockResolvedValue(new Response(JSON.stringify({
+      tid: 'T-mock', next_redirect_pc_url: 'https://online-pay.kakaopay.com/mock-pc',
+    })))
+    expect(await readyKakaoPayReport({ ...ctx(), redirectTarget: 'mobile' })).toMatchObject({ ok: true,
+      redirectUrl: 'https://online-pay.kakaopay.com/mock-pc' })
+  })
+
   it.each(['secret', 'origin', 'year', 'missing-profile', 'invalid-profile', 'entitled', 'active', 'conflict', 'insert-fails', 'draft-fails', 'empty'])(
     'blocks %s before the provider call', async (reason) => {
       const context = ctx()

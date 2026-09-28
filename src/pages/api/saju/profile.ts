@@ -3,10 +3,16 @@ import { env } from 'cloudflare:workers'
 
 import { createDb } from '../../../db/client'
 import { sajuProfiles } from '../../../db/schema'
+import { prepareAnonymousBuyerRateLimit } from '../../../lib/payments/server/report-access'
 
 export const prerender = false
+const headers = { 'Cache-Control': 'private, no-store' }
+type RouteContext = {
+  request: Request
+  cookies: Parameters<typeof prepareAnonymousBuyerRateLimit>[0]['cookies']
+}
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST = (async ({ request, cookies }: RouteContext): Promise<Response> => {
   try {
     const body = await request.json()
 
@@ -67,11 +73,16 @@ export const POST: APIRoute = async ({ request }) => {
       return Response.json({ message: '출생시간과 윤달 값을 확인해주세요.' }, { status: 400 })
     }
 
+    const identity = await prepareAnonymousBuyerRateLimit({ cookies, environment: 'test' })
+    if (!(await env.PROFILE_RATE_LIMIT.limit({ key: identity.key })).success) {
+      return Response.json({ message: '요청이 너무 많습니다.' }, { status: 429, headers })
+    }
+    const db = createDb(env.saju_db)
+    await identity.issueBuyer?.(db)
+
     const profileId = crypto.randomUUID()
 
     const now = new Date()
-
-    const db = createDb(env.saju_db)
 
     await db.insert(sajuProfiles).values({
       id: profileId,
@@ -91,9 +102,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     return Response.json({
       profileId,
-    })
-  } catch (error) {
-    console.error(error)
+    }, { headers })
+  } catch {
 
     return Response.json(
       {
@@ -101,7 +111,8 @@ export const POST: APIRoute = async ({ request }) => {
       },
       {
         status: 500,
+        headers,
       },
     )
   }
-}
+}) satisfies APIRoute

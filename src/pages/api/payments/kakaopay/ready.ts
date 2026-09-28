@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro'
 import { env } from 'cloudflare:workers'
 import { createDb } from '../../../../db/client'
 import { readyKakaoPayReport } from '../../../../lib/payments/server/kakaopay-ready'
+import { prepareAnonymousBuyerRateLimit } from '../../../../lib/payments/server/report-access'
 
 export const prerender = false
 
@@ -34,10 +35,14 @@ export const POST = (async ({ request, cookies }: RouteContext): Promise<Respons
       return failure(400)
     }
 
-    // RATE-LIMIT INTEGRATION POINT: enforce the request budget here, before buyer
-    // creation / D1 writes / provider calls. A limiter is intentionally not implemented yet.
+    const identity = await prepareAnonymousBuyerRateLimit({ cookies, environment: 'test' })
+    if (!(await env.READY_RATE_LIMIT.limit({ key: identity.key })).success) return failure(429)
+    const db = createDb(env.saju_db)
+    await identity.issueBuyer?.(db)
+    const userAgent = request.headers.get('User-Agent') ?? ''
+    const redirectTarget = /iPhone|iPad|Android|Mobile/i.test(userAgent) ? 'mobile' : 'pc'
     const result = await readyKakaoPayReport({
-      db: createDb(env.saju_db), cookies, profileId: body.profileId, reportYear: 2026,
+      db, cookies, profileId: body.profileId, reportYear: 2026, redirectTarget,
     })
     if (result.ok) return Response.json({ redirectUrl: result.redirectUrl }, { headers })
     const status = result.code === 'already-entitled' || result.code === 'purchase-exists' ? 409

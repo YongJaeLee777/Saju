@@ -48,7 +48,10 @@ export async function getOrCreateAnonymousBuyer(context: BuyerContext) {
   const buyer = await findBuyer(context)
   if (buyer) return buyer
 
-  const token = hex(crypto.getRandomValues(new Uint8Array(32)))
+  return createAnonymousBuyer(context, hex(crypto.getRandomValues(new Uint8Array(32))))
+}
+
+async function createAnonymousBuyer(context: BuyerContext, token: string) {
   const createdAt = new Date(Math.floor(Date.now() / 1000) * 1000)
   const expiresAt = new Date(createdAt.getTime() + lifetimeSeconds * 1000)
   const id = crypto.randomUUID()
@@ -61,6 +64,21 @@ export async function getOrCreateAnonymousBuyer(context: BuyerContext) {
     maxAge: lifetimeSeconds, expires: expiresAt,
   })
   return { id, expiresAt }
+}
+
+/** Prepare a hashed key without D1 access. A first visit persists its new buyer
+ * only after the rate limit allows the request.
+ */
+export async function prepareAnonymousBuyerRateLimit(
+  context: Pick<BuyerContext, 'cookies' | 'environment'>,
+): Promise<{ key: string; issueBuyer?: (db: BuyerContext['db']) => ReturnType<typeof createAnonymousBuyer> }> {
+  const token = context.cookies.get(cookieName(context.environment))?.value
+  if (token && /^[0-9a-f]{64}$/.test(token)) return { key: await hashToken(token) }
+  const newToken = hex(crypto.getRandomValues(new Uint8Array(32)))
+  return {
+    key: await hashToken(newToken),
+    issueBuyer: (db: BuyerContext['db']) => createAnonymousBuyer({ ...context, db }, newToken),
+  }
 }
 
 /** Authenticate from the cookie, then use the entitlement's full UNIQUE key.

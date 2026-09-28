@@ -4,6 +4,8 @@
 interface __BaseEnv_Env {
 	saju_db: D1Database;
 	ASSETS: Fetcher;
+	PROFILE_RATE_LIMIT: RateLimit;
+	READY_RATE_LIMIT: RateLimit;
 }
 declare namespace Cloudflare {
 	interface Env extends __BaseEnv_Env {}

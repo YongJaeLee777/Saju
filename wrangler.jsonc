@@ -14,6 +14,10 @@
 	"observability": {
 		"enabled": true
 	},
+	"ratelimits": [
+		{ "name": "PROFILE_RATE_LIMIT", "namespace_id": "926021301", "simple": { "limit": 6, "period": 60 } },
+		{ "name": "READY_RATE_LIMIT", "namespace_id": "926021302", "simple": { "limit": 3, "period": 60 } }
+	],
 	"d1_databases": [
     {
       "binding": "saju_db",

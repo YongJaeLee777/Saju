@@ -2,8 +2,9 @@ import 'astro:env/server'
 import { env } from 'cloudflare:workers'
 import { and, eq, gt } from 'drizzle-orm'
 import type { createDb } from '../../../db/client'
-import { purchases, reportEntitlements, reportSnapshots } from '../../../db/schema'
+import { purchases } from '../../../db/schema'
 import { callbackPurchaseFilter } from './callback-purchase'
+import { completePurchase } from './complete-purchase'
 
 type Context = { db: ReturnType<typeof createDb>; order: string; state: string; pgToken: string }
 type Result = { ok: true; profileId: string } | { ok: false; code: 'invalid-callback' | 'configuration' | 'pending' | 'provider-failed' | 'storage-error' }
@@ -84,24 +85,7 @@ export async function approveKakaoPayReport({ db, order, state, pgToken }: Conte
       return { ok: false, code: 'pending' }
     }
 
-    const now = new Date()
-    const snapshotId = crypto.randomUUID()
-    // D1 batch is atomic. UNIQUE conflicts roll back all three writes; never grant
-    // partial access or rebuild the report from potentially changed profile data.
-    await db.batch([
-      db.insert(reportSnapshots).values({ id: snapshotId, purchaseId: purchase.id,
-        profileId: purchase.profileId, reportYear: purchase.reportYear, reportJson: purchase.draftReportJson,
-        schemaVersion: purchase.reportSchemaVersion, methodologyVersionsJson: purchase.methodologyVersionsJson,
-        referenceAt: purchase.referenceAt, inputHash: purchase.inputHash, reportHash: purchase.reportHash, createdAt: now }),
-      db.insert(reportEntitlements).values({ id: crypto.randomUUID(), buyerId: purchase.buyerId,
-        profileId: purchase.profileId, reportYear: purchase.reportYear, environment: purchase.environment,
-        purchaseId: purchase.id, snapshotId, grantedAt: now }),
-      db.update(purchases).set({ status: 'approved', processingPhase: 'complete', approvalAid: data.aid,
-        approvedTotalAmount: purchase.expectedTotalAmount, approvedAt: now, draftReportJson: null,
-        lastErrorCode: null, leaseToken: null, leaseExpiresAt: null, updatedAt: now,
-      }).where(and(eq(purchases.id, purchase.id), eq(purchases.status, 'ready'),
-        eq(purchases.processingPhase, 'approving'), eq(purchases.leaseToken, lease))),
-    ])
+    await completePurchase(db, purchase, lease, 'approving', data.aid)
     return { ok: true, profileId: purchase.profileId }
   } catch {
     try { await saveFailure('storage-error') } catch { /* Keep the existing claim blocked; no retries. */ }

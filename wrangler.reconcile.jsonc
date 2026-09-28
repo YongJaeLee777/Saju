@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // Local CLI binding proxy only; never deploy this configuration.
+  "name": "saju-manual-reconcile",
+  "compatibility_date": "2026-09-08",
+  "workers_dev": false,
+  "preview_urls": false,
+  "d1_databases": [
+    {
+      "binding": "saju_db",
+      "database_name": "saju-db",
+      // Must match the authoritative saju_db database_id in wrangler.jsonc.
+      "database_id": "1dce25f1-9095-4758-a7bf-fbce80a74c04",
+      "remote": true
+    }
+  ]
+}

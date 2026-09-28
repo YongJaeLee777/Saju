@@ -17,6 +17,8 @@
         <p class="hero-description">태어난 날에 담긴 사주와 올해의 흐름을 살펴보세요.<br class="desktop-break" /> 나의 일과 관계를 돌아보는 참고가 될 수 있어요.</p>
       </header>
 
+      <a class="history-link" href="/history">최근 결과 보기 →</a>
+
       <form id="saju-form" aria-labelledby="form-heading">
         <div class="card-heading">
           <h2 id="form-heading">태어난 정보를 알려주세요</h2>
@@ -84,6 +86,8 @@
     </main>
 
     <script>
+      import { recentResultUrl, saveRecentResult } from '../lib/saju/client/recent-history'
+
       const form = document.querySelector('#saju-form')
       const errorMessage =
         document.querySelector('#error-message')
@@ -133,7 +137,22 @@
         }
 
         if ('profileId' in result && typeof result.profileId === 'string') {
-          window.location.href = `/result/${encodeURIComponent(result.profileId)}`
+          const url = recentResultUrl(result.profileId)
+          if (!url) {
+            if (errorMessage) errorMessage.textContent = '사주 결과 주소를 확인할 수 없습니다.'
+            return
+          }
+          try {
+            saveRecentResult(window.localStorage, {
+              profileId: result.profileId,
+              birthDate: body.birthDate,
+              birthTime: body.birthTime,
+              gender: body.gender,
+              calendarType: body.calendarType,
+              createdAt: new Date().toISOString(),
+            })
+          } catch { /* Storage may be unavailable; keep normal navigation. */ }
+          window.location.href = url
         } else if (errorMessage) {
           errorMessage.textContent = '사주 결과 주소를 확인할 수 없습니다.'
         }
@@ -153,6 +172,7 @@
   h1 { margin-top: 12px; font-size: clamp(2rem, 7.5vw, 2.875rem); font-weight: 750; letter-spacing: -0.055em; line-height: 1.28; word-break: keep-all; }
   .hero-description { margin-top: 20px; color: #706860; font-size: 0.9375rem; line-height: 1.85; word-break: keep-all; }
   .desktop-break { display: none; }
+  .history-link { display: inline-block; margin-top: 20px; color: #95503d; font-size: 0.875rem; font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
   form { margin-top: 32px; padding: 24px 20px; border: 1px solid #e8e1da; border-radius: 24px; background: #fff; box-shadow: 0 8px 28px rgb(64 43 28 / 4%); }
   .card-heading { margin-bottom: 28px; }
   h2 { font-size: 1.1875rem; letter-spacing: -0.035em; line-height: 1.5; }

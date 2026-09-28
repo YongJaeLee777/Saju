@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro'
+import { getPaymentConfig } from '../../../../lib/payments/server/payment-config'
 import { env } from 'cloudflare:workers'
 import { createDb } from '../../../../db/client'
 import { readyKakaoPayReport } from '../../../../lib/payments/server/kakaopay-ready'
@@ -35,7 +36,9 @@ export const POST = (async ({ request, cookies }: RouteContext): Promise<Respons
       return failure(400)
     }
 
-    const identity = await prepareAnonymousBuyerRateLimit({ cookies, environment: 'test' })
+    const config = getPaymentConfig()
+    if (!config) return failure(500)
+    const identity = await prepareAnonymousBuyerRateLimit({ cookies, environment: config.environment })
     if (!(await env.READY_RATE_LIMIT.limit({ key: identity.key })).success) return failure(429)
     const db = createDb(env.saju_db)
     await identity.issueBuyer?.(db)

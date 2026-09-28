@@ -1,16 +1,17 @@
 import 'astro:env/server'
-import { env } from 'cloudflare:workers'
+import { getPaymentConfig, matchesPaymentConfig } from './payment-config'
 import { and, eq, gt } from 'drizzle-orm'
 import type { createDb } from '../../../db/client'
 import { purchases } from '../../../db/schema'
 import { callbackPurchaseFilter } from './callback-purchase'
 import { completePurchase } from './complete-purchase'
+import { paymentPurchaseColumns } from './purchase-select'
 
 type Context = { db: ReturnType<typeof createDb>; order: string; state: string; pgToken: string }
 type Result = { ok: true; profileId: string } | { ok: false; code: 'invalid-callback' | 'configuration' | 'pending' | 'provider-failed' | 'storage-error' }
 const record = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 
-/** Test CID only. Tokens live only in memory; no provider payloads or exceptions are logged. */
+/** Tokens live only in memory; no provider payloads or exceptions are logged. */
 export async function approveKakaoPayReport({ db, order, state, pgToken }: Context): Promise<Result> {
   if (!order || order.length > 100 || !/^[0-9a-f]{64}$/.test(state) || !pgToken.trim()) {
     return { ok: false, code: 'invalid-callback' }
@@ -25,15 +26,17 @@ export async function approveKakaoPayReport({ db, order, state, pgToken }: Conte
       eq(purchases.processingPhase, 'approving'), eq(purchases.leaseToken, owned.lease)))
   }
   try {
+    const config = getPaymentConfig()
+    if (!config) return { ok: false, code: 'configuration' }
     const filter = await callbackPurchaseFilter(order, state)
     if (!filter) return { ok: false, code: 'invalid-callback' }
-    const [purchase] = await db.select().from(purchases).where(filter).limit(1)
+    const [purchase] = await db.select(paymentPurchaseColumns).from(purchases).where(filter).limit(1)
     if (!purchase) return { ok: false, code: 'invalid-callback' }
     if (purchase.status === 'approved' && purchase.processingPhase === 'complete') return { ok: true, profileId: purchase.profileId }
     if (purchase.status !== 'ready' || purchase.processingPhase !== 'awaiting_user') return { ok: false, code: 'pending' }
     if (!purchase.tid || !purchase.draftReportJson) return { ok: false, code: 'invalid-callback' }
-    const secret = env.KAKAOPAY_SECRET_KEY
-    if (!secret?.trim()) return { ok: false, code: 'configuration' }
+    const { secret } = config
+    if (!matchesPaymentConfig(purchase, config)) return { ok: false, code: 'configuration' }
 
     const lease = crypto.randomUUID()
     const claimed = await db.update(purchases).set({ processingPhase: 'approving', leaseToken: lease,

@@ -1,9 +1,10 @@
 import 'astro:env/server'
-import { env } from 'cloudflare:workers'
+import { getPaymentConfig, matchesPaymentConfig } from './payment-config'
 import { and, eq, isNull, lte, or } from 'drizzle-orm'
 import type { createDb } from '../../../db/client'
 import { purchases } from '../../../db/schema'
 import { completePurchase } from './complete-purchase'
+import { paymentPurchaseColumns } from './purchase-select'
 
 type Context = { db: ReturnType<typeof createDb>; purchaseId: string }
 type Result = { status: 'approved' | 'failed' | 'cancelled' | 'reconciling' | 'skipped';
@@ -24,19 +25,37 @@ export async function reconcileKakaoPayReport({ db, purchaseId }: Context): Prom
     return { status: 'reconciling', ...(code ? { code } : {}) }
   }
   try {
-    const [purchase] = await db.select().from(purchases).where(eq(purchases.id, purchaseId)).limit(1)
+    const [purchase] = await db.select(paymentPurchaseColumns).from(purchases).where(eq(purchases.id, purchaseId)).limit(1)
     if (!purchase) return { status: 'skipped' }
     if (purchase.status !== 'ready') return { status: purchase.status }
-    if (purchase.processingPhase !== 'reconciling') return { status: 'skipped' }
+    const stale = (purchase.processingPhase === 'preparing' || purchase.processingPhase === 'approving')
+      && purchase.leaseExpiresAt !== null && purchase.leaseExpiresAt <= new Date()
+    if (purchase.processingPhase !== 'reconciling' && !stale) return { status: 'skipped' }
+    if (stale && purchase.processingPhase === 'preparing' && !purchase.tid) {
+      const config = getPaymentConfig()
+      if (!config || !matchesPaymentConfig(purchase, config)) return { status: 'skipped' }
+      // ready stores tid before returning any redirect URL. This purchase could
+      // never have sent a payment URL to the browser, so a fresh ready is safe.
+      const changed = await db.update(purchases).set({ status: 'failed', processingPhase: 'complete',
+        lastErrorCode: 'ready-not-delivered', leaseToken: null, leaseExpiresAt: null, updatedAt: new Date(),
+      }).where(and(eq(purchases.id, purchaseId), eq(purchases.status, 'ready'),
+        eq(purchases.processingPhase, 'preparing'), isNull(purchases.tid),
+        lte(purchases.leaseExpiresAt, new Date()))).returning({ id: purchases.id })
+      return { status: changed.length === 1 ? 'failed' : 'skipped' }
+    }
     if (!purchase.tid || !purchase.cid || !purchase.draftReportJson) return { status: 'reconciling', code: 'missing-data' }
-    const secret = env.KAKAOPAY_SECRET_KEY
-    if (!secret?.trim()) return { status: 'reconciling', code: 'configuration' }
+    const config = getPaymentConfig()
+    if (!config || !matchesPaymentConfig(purchase, config)) return { status: 'reconciling', code: 'configuration' }
+    const { secret } = config
 
     const token = crypto.randomUUID()
-    const claimed = await db.update(purchases).set({ leaseToken: token,
+    const claimFilter = stale
+      ? and(eq(purchases.processingPhase, purchase.processingPhase), lte(purchases.leaseExpiresAt, new Date()))
+      : and(eq(purchases.processingPhase, 'reconciling'),
+        or(isNull(purchases.leaseToken), lte(purchases.leaseExpiresAt, new Date())))
+    const claimed = await db.update(purchases).set({ processingPhase: 'reconciling', leaseToken: token,
       leaseExpiresAt: new Date(Date.now() + 60000), updatedAt: new Date() }).where(and(
-      eq(purchases.id, purchaseId), eq(purchases.status, 'ready'), eq(purchases.processingPhase, 'reconciling'),
-      or(isNull(purchases.leaseToken), lte(purchases.leaseExpiresAt, new Date())),
+      eq(purchases.id, purchaseId), eq(purchases.status, 'ready'), claimFilter,
     )).returning({ id: purchases.id })
     if (claimed.length !== 1) return { status: 'reconciling' }
     lease = token

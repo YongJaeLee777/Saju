@@ -5,6 +5,7 @@ import { purchases, sajuProfiles } from '../../../db/schema'
 import { buildResultReport } from '../../saju/server/result-page'
 import type { SajuInput } from '../../saju/types'
 import { findReportEntitlement, getOrCreateAnonymousBuyer } from './report-access'
+import { getPaymentConfig } from './payment-config'
 import { parseCallbackOrigin } from './callback-origin'
 
 type Context = Pick<Parameters<typeof getOrCreateAnonymousBuyer>[0], 'db' | 'cookies'> & {
@@ -28,9 +29,7 @@ const fail = (code: FailureCode): ReadyResult => ({ ok: false, code, cacheContro
 const hex = (bytes: Uint8Array) => Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
 const hash = async (value: string) => hex(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))))
 const record = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
-const cid = 'TC0ONETIME'
-const environment = 'test'
-const amount = 1000 // Test product only; live checkout is not supported here.
+const amount = 1000 // Existing product price; independent of provider environment.
 const itemName = '2026년 사주 상세 리포트'
 const timeoutMs = 10000
 
@@ -57,10 +56,6 @@ function networkDebug(error: unknown, stage: NetworkDebug['stage']): NetworkDebu
   } catch { return { stage, errorName: 'Unknown', category: 'unknown' } }
 }
 
-function callbackOrigin() {
-  return parseCallbackOrigin(env.KAKAOPAY_CALLBACK_ORIGIN, environment)
-}
-
 function redirectUrl(value: unknown) {
   if (typeof value !== 'string') return null
   try {
@@ -71,19 +66,21 @@ function redirectUrl(value: unknown) {
   } catch { return null }
 }
 
-/** Test-CID ready only. Caller must enforce CSRF/rate limits before exposing HTTP.
+/** Configured-environment ready. Caller must enforce CSRF/rate limits before exposing HTTP.
  * No retries, logging, approval, snapshot creation, or entitlement writes.
  * An existing purchase is blocked, not resumed by reissuing ready.
  */
 export async function readyKakaoPayReport(context: Context): Promise<ReadyResult> {
-  const origin = callbackOrigin()
-  const secret = env.KAKAOPAY_SECRET_KEY
-  if (!origin || !secret?.trim()) return fail('configuration')
+  const config = getPaymentConfig()
+  if (!config) return fail('configuration')
+  const { environment, cid, secret } = config
+  const origin = parseCallbackOrigin(env.KAKAOPAY_CALLBACK_ORIGIN, environment)
+  if (!origin) return fail('configuration')
   if (typeof context.profileId !== 'string' || !context.profileId || context.reportYear !== 2026
     || (context.redirectTarget !== undefined && context.redirectTarget !== 'pc' && context.redirectTarget !== 'mobile')) {
     return fail('invalid-input')
   }
-  const access = { ...context, environment: 'test' as const }
+  const access = { ...context, environment }
   let purchaseId: string | undefined
   let leaseToken: string | undefined
   let tid: string | undefined
@@ -97,7 +94,7 @@ export async function readyKakaoPayReport(context: Context): Promise<ReadyResult
     if (!profile) return fail('profile-not-found')
     if ((profile.gender !== 'male' && profile.gender !== 'female')
       || (profile.calendarType !== 'solar' && profile.calendarType !== 'lunar')) return fail('invalid-profile')
-    if (await findReportEntitlement(access)) return fail('already-entitled')
+    if (await findReportEntitlement({ ...access, buyer })) return fail('already-entitled')
     const [active] = await context.db.select({ id: purchases.id }).from(purchases).where(and(
       eq(purchases.buyerId, buyer.id), eq(purchases.profileId, context.profileId),
       eq(purchases.reportYear, context.reportYear), eq(purchases.environment, environment),

@@ -5,7 +5,7 @@ import { createDb } from '../../../db/client'
 import { prepareAnonymousBuyerRateLimit } from './report-access'
 
 const { readyLimit } = vi.hoisted(() => ({ readyLimit: vi.fn() }))
-vi.mock('cloudflare:workers', () => ({ env: { saju_db: {}, READY_RATE_LIMIT: { limit: readyLimit } } }))
+vi.mock('cloudflare:workers', () => ({ env: { KAKAOPAY_ENVIRONMENT: 'test', KAKAOPAY_CID: 'TC0ONETIME', KAKAOPAY_SECRET_KEY: 'mock-secret', saju_db: {}, READY_RATE_LIMIT: { limit: readyLimit } } }))
 vi.mock('../../../db/client', () => ({ createDb: vi.fn(() => ({ mockedDb: true })) }))
 vi.mock('./kakaopay-ready', () => ({ readyKakaoPayReport: vi.fn() }))
 vi.mock('./report-access', () => ({ prepareAnonymousBuyerRateLimit: vi.fn() }))

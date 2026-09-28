@@ -6,7 +6,7 @@ import { createDb } from '../../../db/client'
 import { anonymousBuyers, purchases, reportSnapshots, reportEntitlements, sajuProfiles } from '../../../db/schema'
 import { ALL, prerender } from '../../../pages/api/payments/kakaopay/approval'
 
-const { workerEnv } = vi.hoisted(() => ({ workerEnv: { KAKAOPAY_SECRET_KEY: 'mock-secret', saju_db: undefined as D1Database | undefined } }))
+const { workerEnv } = vi.hoisted(() => ({ workerEnv: { KAKAOPAY_ENVIRONMENT: 'test', KAKAOPAY_CID: 'TC0ONETIME', KAKAOPAY_SECRET_KEY: 'mock-secret', saju_db: undefined as D1Database | undefined } }))
 vi.mock('astro:env/server', () => ({}))
 vi.mock('cloudflare:workers', () => ({ env: workerEnv }))
 
@@ -47,6 +47,8 @@ beforeAll(async () => {
 }, 30000)
 
 beforeEach(async () => {
+  workerEnv.KAKAOPAY_ENVIRONMENT = 'test'
+  workerEnv.KAKAOPAY_CID = 'TC0ONETIME'
   await d1.batch(['report_entitlements', 'report_snapshots', 'purchases', 'anonymous_buyers', 'saju_profiles']
     .map((table) => d1.prepare(`DELETE FROM ${table}`)))
   const now = new Date()
@@ -166,5 +168,31 @@ describe('approve callback (mock provider, local D1)', () => {
       await call()
       expect(network).toHaveBeenCalledTimes(1)
     } finally { await d1.prepare('DROP TRIGGER reject_grant').run() }
+  })
+})
+
+
+describe('approve central payment configuration', () => {
+  it.each(['live-test-cid', 'test-live-cid', 'missing-env', 'invalid-env', 'stored-env', 'stored-cid'])('blocks %s before provider calls', async (reason) => {
+    if (reason === 'live-test-cid') workerEnv.KAKAOPAY_ENVIRONMENT = 'live'
+    if (reason === 'test-live-cid') workerEnv.KAKAOPAY_CID = 'MOCKLIVE01'
+    if (reason === 'missing-env') Reflect.deleteProperty(workerEnv, 'KAKAOPAY_ENVIRONMENT')
+    if (reason === 'invalid-env') workerEnv.KAKAOPAY_ENVIRONMENT = 'invalid'
+    if (reason === 'stored-env') await db.update(purchases).set({ environment: 'live' })
+    if (reason === 'stored-cid') await db.update(purchases).set({ cid: 'MOCKLIVE01' })
+    const before = await stored()
+    expect((await call()).status).toBeGreaterThanOrEqual(400)
+    expect(await stored()).toEqual(before)
+    expect(network).not.toHaveBeenCalled()
+    await noAccess()
+  })
+  it('approves a matching synthetic live purchase', async () => {
+    workerEnv.KAKAOPAY_ENVIRONMENT = 'live'
+    workerEnv.KAKAOPAY_CID = 'MOCKLIVE01'
+    await db.update(purchases).set({ environment: 'live', cid: 'MOCKLIVE01' })
+    network.mockResolvedValue(Response.json({ ...providerBody(), cid: 'MOCKLIVE01' }))
+    expect((await call()).status).toBe(303)
+    expect(await stored()).toMatchObject({ status: 'approved', environment: 'live', cid: 'MOCKLIVE01' })
+    expect((await db.select().from(reportEntitlements))[0]).toMatchObject({ environment: 'live' })
   })
 })

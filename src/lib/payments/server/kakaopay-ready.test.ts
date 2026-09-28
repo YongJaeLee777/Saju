@@ -5,7 +5,7 @@ import { getOrCreateAnonymousBuyer, findReportEntitlement } from './report-acces
 import { buildResultReport } from '../../saju/server/result-page'
 
 const { workerEnv, draft } = vi.hoisted(() => ({
-  workerEnv: { KAKAOPAY_SECRET_KEY: 'mock-secret', KAKAOPAY_CALLBACK_ORIGIN: 'https://saju.example' },
+  workerEnv: { KAKAOPAY_ENVIRONMENT: 'test', KAKAOPAY_CID: 'TC0ONETIME', KAKAOPAY_SECRET_KEY: 'mock-secret', KAKAOPAY_CALLBACK_ORIGIN: 'https://saju.example' },
   draft: { pillars: [], daewoonNotice: null,
     luck: { referenceDate: '2026-09-19', currentDaewoon: null, currentAnnualLuck: null }, report: {
     title: 'Report', intro: 'Intro', closing: 'Closing',
@@ -88,6 +88,8 @@ const response = () => new Response(JSON.stringify({ tid: 'T-mock',
   next_redirect_mobile_url: 'https://online-pay.kakaopay.com/mock-mobile' }), { status: 200 })
 
 beforeEach(() => {
+  workerEnv.KAKAOPAY_ENVIRONMENT = 'test'
+  workerEnv.KAKAOPAY_CID = 'TC0ONETIME'
   vi.clearAllMocks()
   vi.stubEnv('DEV', true)
   vi.stubEnv('PROD', false)
@@ -319,5 +321,26 @@ describe('test Kakao Pay ready (mock only)', () => {
     expect(network.mock.calls[0]?.[1]?.signal?.aborted).toBe(true)
     expect(updates.at(-1)?.params).toContain('reconciling')
     expect(network).toHaveBeenCalledTimes(1)
+  })
+})
+
+
+describe('ready central payment configuration', () => {
+  it.each(['live-test-cid', 'test-live-cid', 'missing-env', 'invalid-env'])('blocks %s before storage or provider work', async (reason) => {
+    if (reason === 'live-test-cid') workerEnv.KAKAOPAY_ENVIRONMENT = 'live'
+    if (reason === 'test-live-cid') workerEnv.KAKAOPAY_CID = 'MOCKLIVE01'
+    if (reason === 'missing-env') Reflect.deleteProperty(workerEnv, 'KAKAOPAY_ENVIRONMENT')
+    if (reason === 'invalid-env') workerEnv.KAKAOPAY_ENVIRONMENT = 'invalid'
+    expect(await readyKakaoPayReport(ctx())).toMatchObject({ ok: false, code: 'configuration' })
+    expect(queries).toEqual([])
+    expect(network).not.toHaveBeenCalled()
+  })
+  it('uses configured live identity for purchase, cookie lookup and request', async () => {
+    workerEnv.KAKAOPAY_ENVIRONMENT = 'live'
+    workerEnv.KAKAOPAY_CID = 'MOCKLIVE01'
+    expect(await readyKakaoPayReport(ctx())).toMatchObject({ ok: true })
+    expect(row).toMatchObject({ environment: 'live', cid: 'MOCKLIVE01' })
+    expect(getOrCreateAnonymousBuyer).toHaveBeenCalledWith(expect.objectContaining({ environment: 'live' }))
+    expect(JSON.parse(String(network.mock.calls[0]![1]!.body))).toMatchObject({ cid: 'MOCKLIVE01' })
   })
 })

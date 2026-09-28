@@ -7,11 +7,14 @@ import { reconcileKakaoPayReport } from './kakaopay-reconcile'
 /** Local administrator CLI only. Return no identifiers or diagnostic payloads. */
 export async function manuallyReconcilePurchase(db: ReturnType<typeof createDb>, purchaseId: string) {
   try {
-    const [purchase] = await db.select({ status: purchases.status, phase: purchases.processingPhase })
+    const [purchase] = await db.select({ status: purchases.status, phase: purchases.processingPhase,
+      leaseExpiresAt: purchases.leaseExpiresAt })
       .from(purchases).where(eq(purchases.id, purchaseId)).limit(1)
     if (!purchase) return { status: 'not-found' as const }
     if (purchase.status !== 'ready') return { status: purchase.status }
-    if (purchase.phase !== 'reconciling') return { status: 'skipped' as const }
+    const stale = (purchase.phase === 'preparing' || purchase.phase === 'approving')
+      && purchase.leaseExpiresAt !== null && purchase.leaseExpiresAt <= new Date()
+    if (purchase.phase !== 'reconciling' && !stale) return { status: 'skipped' as const }
     const result = await reconcileKakaoPayReport({ db, purchaseId })
     return { status: result.status }
   } catch {

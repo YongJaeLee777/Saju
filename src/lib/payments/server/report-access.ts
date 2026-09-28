@@ -15,7 +15,8 @@ type BuyerContext = {
   // Must come from server configuration, never a request parameter.
   environment: Environment
 }
-type ReportContext = BuyerContext & { profileId: string; reportYear: number }
+type Buyer = { id: string; expiresAt: Date }
+type ReportContext = BuyerContext & { profileId: string; reportYear: number; buyer?: Buyer }
 
 const lifetimeSeconds = 365 * 24 * 60 * 60
 const hex = (bytes: Uint8Array) => Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
@@ -86,7 +87,7 @@ export async function prepareAnonymousBuyerRateLimit(
  */
 export async function findReportEntitlement(context: ReportContext) {
   if (!context.profileId || !Number.isInteger(context.reportYear)) return null
-  const buyer = await findBuyer(context)
+  const buyer = context.buyer ?? await findBuyer(context)
   if (!buyer) return null
   const [entitlement] = await context.db.select({
     snapshotId: reportEntitlements.snapshotId,

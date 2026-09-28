@@ -1,3 +1,4 @@
+import { getPaymentIdentity } from '../../../lib/payments/server/payment-config'
 import type { APIRoute } from 'astro'
 import { env } from 'cloudflare:workers'
 
@@ -73,7 +74,9 @@ export const POST = (async ({ request, cookies }: RouteContext): Promise<Respons
       return Response.json({ message: '출생시간과 윤달 값을 확인해주세요.' }, { status: 400 })
     }
 
-    const identity = await prepareAnonymousBuyerRateLimit({ cookies, environment: 'test' })
+    const config = getPaymentIdentity()
+    if (!config) return Response.json({ message: 'Configuration error' }, { status: 500, headers })
+    const identity = await prepareAnonymousBuyerRateLimit({ cookies, environment: config.environment })
     if (!(await env.PROFILE_RATE_LIMIT.limit({ key: identity.key })).success) {
       return Response.json({ message: '요청이 너무 많습니다.' }, { status: 429, headers })
     }

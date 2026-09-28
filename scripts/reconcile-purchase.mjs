@@ -42,7 +42,8 @@ export async function runManualReconcile(args) {
       }],
     })
     const runtime = await loader.ssrLoadModule('cloudflare:workers')
-    Object.assign(runtime.env, { saju_db: platform.env.saju_db, KAKAOPAY_SECRET_KEY: process.env.KAKAOPAY_SECRET_KEY })
+    Object.assign(runtime.env, { KAKAOPAY_ENVIRONMENT: platform.env.KAKAOPAY_ENVIRONMENT,
+      KAKAOPAY_CID: platform.env.KAKAOPAY_CID, saju_db: platform.env.saju_db, KAKAOPAY_SECRET_KEY: process.env.KAKAOPAY_SECRET_KEY })
     const { createDb } = await loader.ssrLoadModule('/src/db/client.ts')
     const { manuallyReconcilePurchase } = await loader.ssrLoadModule('/src/lib/payments/server/manual-reconcile.ts')
     const outcome = await manuallyReconcilePurchase(createDb(platform.env.saju_db), args[0])

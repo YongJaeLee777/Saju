@@ -8,7 +8,7 @@ import { createDb } from '../../../db/client'
 const { profileLimit, readyLimit, insertValues } = vi.hoisted(() => ({
   profileLimit: vi.fn(), readyLimit: vi.fn(), insertValues: vi.fn(),
 }))
-vi.mock('cloudflare:workers', () => ({ env: {
+vi.mock('cloudflare:workers', () => ({ env: { KAKAOPAY_ENVIRONMENT: 'test', KAKAOPAY_CID: 'TC0ONETIME', KAKAOPAY_SECRET_KEY: 'mock-secret',
   saju_db: {}, PROFILE_RATE_LIMIT: { limit: profileLimit }, READY_RATE_LIMIT: { limit: readyLimit },
 } }))
 vi.mock('../../../db/client', () => ({ createDb: vi.fn(() => ({

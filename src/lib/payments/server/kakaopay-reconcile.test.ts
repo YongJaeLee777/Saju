@@ -8,7 +8,7 @@ import { reconcileKakaoPayReport } from './kakaopay-reconcile'
 import { manuallyReconcilePurchase } from './manual-reconcile'
 import { runManualReconcile } from '../../../../scripts/reconcile-purchase.mjs'
 
-const { workerEnv } = vi.hoisted(() => ({ workerEnv: { KAKAOPAY_SECRET_KEY: 'mock-secret', saju_db: undefined as D1Database | undefined } }))
+const { workerEnv } = vi.hoisted(() => ({ workerEnv: { KAKAOPAY_ENVIRONMENT: 'test', KAKAOPAY_CID: 'TC0ONETIME', KAKAOPAY_SECRET_KEY: 'mock-secret', saju_db: undefined as D1Database | undefined } }))
 vi.mock('astro:env/server', () => ({}))
 vi.mock('cloudflare:workers', () => ({ env: workerEnv }))
 // Never create a remote proxy in tests; the CLI receives only disposable local D1.
@@ -48,6 +48,8 @@ beforeAll(async () => {
 }, 30000)
 
 beforeEach(async () => {
+  workerEnv.KAKAOPAY_ENVIRONMENT = 'test'
+  workerEnv.KAKAOPAY_CID = 'TC0ONETIME'
   await d1.batch(['report_entitlements', 'report_snapshots', 'purchases', 'anonymous_buyers', 'saju_profiles']
     .map((table) => d1.prepare(`DELETE FROM ${table}`)))
   const now = new Date()
@@ -259,7 +261,7 @@ describe('manual administrator entry (local D1 only)', () => {
     const dispose = vi.fn(async () => {})
     const cache = { delete: vi.fn(async () => false), match: vi.fn(async () => undefined), put: vi.fn(async () => {}) }
     vi.mocked(getPlatformProxy).mockResolvedValue({
-      env: { saju_db: d1 }, cf: {},
+      env: { saju_db: d1, KAKAOPAY_ENVIRONMENT: 'test', KAKAOPAY_CID: 'TC0ONETIME' }, cf: {},
       ctx: { waitUntil: vi.fn(), passThroughOnException: vi.fn(), props: {} },
       caches: { default: cache, open: vi.fn(async () => cache) },
       dispose,
@@ -296,3 +298,114 @@ describe('manual administrator entry (local D1 only)', () => {
   })
 })
 
+
+
+describe('reconcile central payment configuration', () => {
+  it.each(['live-test-cid', 'test-live-cid', 'missing-env', 'invalid-env', 'stored-env', 'stored-cid'])('blocks %s before provider calls', async (reason) => {
+    if (reason === 'live-test-cid') workerEnv.KAKAOPAY_ENVIRONMENT = 'live'
+    if (reason === 'test-live-cid') workerEnv.KAKAOPAY_CID = 'MOCKLIVE01'
+    if (reason === 'missing-env') Reflect.deleteProperty(workerEnv, 'KAKAOPAY_ENVIRONMENT')
+    if (reason === 'invalid-env') workerEnv.KAKAOPAY_ENVIRONMENT = 'invalid'
+    if (reason === 'stored-env') await db.update(purchases).set({ environment: 'live' })
+    if (reason === 'stored-cid') await db.update(purchases).set({ cid: 'MOCKLIVE01' })
+    const before = await stored()
+    expect(await call()).toEqual({ status: 'reconciling', code: 'configuration' })
+    expect(await stored()).toEqual(before)
+    expect(network).not.toHaveBeenCalled()
+    await noAccess()
+  })
+  it('reconciles a matching synthetic live purchase', async () => {
+    workerEnv.KAKAOPAY_ENVIRONMENT = 'live'
+    workerEnv.KAKAOPAY_CID = 'MOCKLIVE01'
+    await db.update(purchases).set({ environment: 'live', cid: 'MOCKLIVE01' })
+    network.mockResolvedValue(Response.json({ ...providerBody(), cid: 'MOCKLIVE01' }))
+    expect(await call()).toEqual({ status: 'approved' })
+    expect((await db.select().from(reportEntitlements))[0]).toMatchObject({ environment: 'live' })
+  })
+})
+
+describe('manual recovery of expired ready and approve leases', () => {
+  const manual = () => manuallyReconcilePurchase(db, 'purchase')
+  const stale = async (phase: 'preparing' | 'approving', tid: string | null = 'mock-tid') => {
+    await db.update(purchases).set({ processingPhase: phase, tid,
+      leaseToken: 'expired-owner', leaseExpiresAt: new Date(0) })
+  }
+
+  it('uses order lookup to complete stale approving once', async () => {
+    await stale('approving')
+    expect(await manual()).toEqual({ status: 'approved' })
+    expect(await manual()).toEqual({ status: 'approved' })
+    expect(network).toHaveBeenCalledTimes(1)
+    expect(network.mock.calls[0]![0]).toBe('https://open-api.kakaopay.com/online/v1/payment/order')
+    expect(await db.select().from(reportSnapshots)).toHaveLength(1)
+    expect(await db.select().from(reportEntitlements)).toHaveLength(1)
+  })
+
+  it.each([['CANCEL_PAYMENT', 'cancelled'], ['FAIL_PAYMENT', 'failed']] as const)(
+    'ends stale approving %s as %s', async (providerStatus, expected) => {
+      await stale('approving')
+      network.mockResolvedValue(Response.json({ ...providerBody(), status: providerStatus }))
+      expect(await manual()).toEqual({ status: expected })
+      expect(await stored()).toMatchObject({ status: expected, processingPhase: 'complete' })
+      await noAccess()
+    })
+
+  it.each(['UNKNOWN', 'network', '429', '500'] as const)(
+    'keeps stale approving %s reconciling', async (reason) => {
+      await stale('approving')
+      if (reason === 'network') network.mockRejectedValue(new Error('private-provider-message'))
+      else if (reason === 'UNKNOWN') network.mockResolvedValue(Response.json({ ...providerBody(), status: reason }))
+      else network.mockResolvedValue(new Response(null, { status: Number(reason) }))
+      expect(await manual()).toEqual({ status: 'reconciling' })
+      expect(await stored()).toMatchObject({ status: 'ready', processingPhase: 'reconciling', leaseToken: null })
+      expect(network).toHaveBeenCalledTimes(1)
+      await noAccess()
+    })
+
+  it.each(['approving', 'preparing'] as const)('never touches valid %s lease', async (phase) => {
+    await db.update(purchases).set({ processingPhase: phase,
+      leaseToken: 'active-owner', leaseExpiresAt: new Date(Date.now() + 60000) })
+    const before = await stored()
+    expect(await manual()).toEqual({ status: 'skipped' })
+    expect(await stored()).toEqual(before)
+    expect(network).not.toHaveBeenCalled()
+  })
+
+  it('uses order lookup when stale preparing has a stored tid', async () => {
+    await stale('preparing')
+    expect(await manual()).toEqual({ status: 'approved' })
+    expect(await stored()).toMatchObject({ status: 'approved', processingPhase: 'complete' })
+    expect(network).toHaveBeenCalledTimes(1)
+    expect(await db.select().from(reportSnapshots)).toHaveLength(1)
+    expect(await db.select().from(reportEntitlements)).toHaveLength(1)
+  })
+
+  it('closes stale preparing without tid so a new ready can start', async () => {
+    await stale('preparing', null)
+    expect(await manual()).toEqual({ status: 'failed' })
+    expect(await manual()).toEqual({ status: 'failed' })
+    expect(await stored()).toMatchObject({ status: 'failed', processingPhase: 'complete',
+      lastErrorCode: 'ready-not-delivered', leaseToken: null, tid: null })
+    expect(network).not.toHaveBeenCalled()
+    await noAccess()
+  })
+
+  it('leaves stale preparing without tid unchanged under a different payment configuration', async () => {
+    await stale('preparing', null)
+    workerEnv.KAKAOPAY_ENVIRONMENT = 'live'
+    workerEnv.KAKAOPAY_CID = 'MOCKLIVE01'
+    const before = await stored()
+    expect(await manual()).toEqual({ status: 'skipped' })
+    expect(await stored()).toEqual(before)
+    expect(network).not.toHaveBeenCalled()
+  })
+
+  it('claims stale approving only once across simultaneous calls', async () => {
+    await stale('approving')
+    const results = await Promise.all([manual(), manual()])
+    expect(results).toContainEqual({ status: 'approved' })
+    expect(network).toHaveBeenCalledTimes(1)
+    expect(await db.select().from(reportSnapshots)).toHaveLength(1)
+    expect(await db.select().from(reportEntitlements)).toHaveLength(1)
+  })
+})

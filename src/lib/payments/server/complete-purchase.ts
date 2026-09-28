@@ -2,9 +2,10 @@ import 'astro:env/server'
 import { and, eq, sql } from 'drizzle-orm'
 import type { createDb } from '../../../db/client'
 import { purchases, reportEntitlements, reportSnapshots } from '../../../db/schema'
+import type { PaymentPurchase } from './purchase-select'
 
 /** Atomic finalization shared by approval and order reconciliation. */
-export async function completePurchase(db: ReturnType<typeof createDb>, purchase: typeof purchases.$inferSelect,
+export async function completePurchase(db: ReturnType<typeof createDb>, purchase: PaymentPurchase,
   lease: string, phase: 'approving' | 'reconciling', approvalAid: string | null) {
   const now = new Date()
   const snapshotId = crypto.randomUUID()

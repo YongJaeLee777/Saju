@@ -4,6 +4,8 @@
 	"compatibility_flags": ["global_fetch_strictly_public"],
 	"name": "saju",
 	"vars": {
+		"KAKAOPAY_ENVIRONMENT": "test",
+		"KAKAOPAY_CID": "TC0ONETIME",
 		"KAKAOPAY_CALLBACK_ORIGIN": "https://saju.dydcks4.workers.dev"
 	},
 	"main": "@astrojs/cloudflare/entrypoints/server",
@@ -12,7 +14,16 @@
 		"binding": "ASSETS"
 	},
 	"observability": {
-		"enabled": true
+		"enabled": true,
+		"redact_query_string": true,
+		"logs": {
+			"enabled": true,
+			"invocation_logs": true,
+			"persist": true
+		},
+		"traces": {
+			"enabled": false
+		}
 	},
 	"ratelimits": [
 		{ "name": "PROFILE_RATE_LIMIT", "namespace_id": "926021301", "simple": { "limit": 6, "period": 60 } },

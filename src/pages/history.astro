@@ -1,0 +1,93 @@
+---
+---
+
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>최근 사주 결과</title>
+  </head>
+  <body>
+    <main>
+      <a class="back-link" href="/">← 사주 보러 가기</a>
+      <header>
+        <h1>최근 결과</h1>
+        <p>이 브라우저에서 만든 결과를 다시 열 수 있어요.</p>
+      </header>
+      <div class="toolbar"><button id="clear-history" type="button" hidden>전체 삭제</button></div>
+      <p id="empty-state">저장된 결과가 없습니다.</p>
+      <ul id="history-list" aria-label="최근 사주 결과"></ul>
+    </main>
+
+    <script>
+      import { clearRecentResults, readRecentResults, recentResultUrl, removeRecentResult } from '../lib/saju/client/recent-history'
+
+      const list = document.querySelector('#history-list')
+      const empty = document.querySelector('#empty-state')
+      const clear = document.querySelector('#clear-history')
+
+      function render() {
+        if (!(list instanceof HTMLUListElement) || !(clear instanceof HTMLButtonElement) || !empty) return
+        let items = [] as ReturnType<typeof readRecentResults>
+        try { items = readRecentResults(window.localStorage) } catch { /* Storage may be unavailable. */ }
+        list.replaceChildren()
+        empty.toggleAttribute('hidden', items.length > 0)
+        clear.hidden = items.length === 0
+
+        for (const item of items) {
+          const url = recentResultUrl(item.profileId)
+          if (!url) continue
+          const row = document.createElement('li')
+          const link = document.createElement('a')
+          link.href = url
+          link.className = 'result-link'
+          const date = document.createElement('strong')
+          date.textContent = item.birthDate
+          const details = document.createElement('span')
+          details.textContent = `${item.birthTime ?? '시간 없음'} · ${item.gender === 'male' ? '남성' : '여성'} · ${item.calendarType === 'solar' ? '양력' : '음력'}`
+          link.appendChild(date)
+          link.appendChild(details)
+          const remove = document.createElement('button')
+          remove.type = 'button'
+          remove.className = 'remove-button'
+          remove.textContent = '삭제'
+          remove.setAttribute('aria-label', `${item.birthDate} 결과 삭제`)
+          remove.addEventListener('click', () => {
+            try { removeRecentResult(window.localStorage, item.profileId) } catch { /* Storage may be unavailable. */ }
+            render()
+          })
+          row.appendChild(link)
+          row.appendChild(remove)
+          list.appendChild(row)
+        }
+      }
+
+      clear?.addEventListener('click', () => {
+        try { clearRecentResults(window.localStorage) } catch { /* Storage may be unavailable. */ }
+        render()
+      })
+      render()
+    </script>
+  </body>
+</html>
+
+<style>
+  :global(*) { box-sizing: border-box; }
+  :global(body) { margin: 0; background: #f8f6f3; color: #302d2a; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; line-height: 1.6; }
+  main { max-width: 680px; margin: 0 auto; padding: 28px 20px 48px; }
+  .back-link { color: #95503d; font-size: 0.875rem; font-weight: 650; }
+  header { margin-top: 36px; }
+  h1 { margin: 0; font-size: 2rem; letter-spacing: -0.045em; }
+  header p { margin: 8px 0 0; color: #706860; font-size: 0.9375rem; }
+  .toolbar { min-height: 48px; margin-top: 20px; text-align: right; }
+  button { border: 0; background: transparent; color: #95503d; font: inherit; font-size: 0.8125rem; cursor: pointer; }
+  button:focus-visible, a:focus-visible { outline: 3px solid #c17a5e; outline-offset: 3px; }
+  #empty-state { padding: 30px 20px; border: 1px solid #e8e1da; border-radius: 20px; background: #fff; color: #706860; text-align: center; }
+  #history-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+  li { display: flex; align-items: center; gap: 10px; min-height: 84px; padding: 14px 16px; border: 1px solid #e8e1da; border-radius: 18px; background: #fff; }
+  .result-link { display: grid; gap: 3px; flex: 1; min-width: 0; color: inherit; text-decoration: none; }
+  .result-link strong { font-size: 1rem; }
+  .result-link span { color: #706860; font-size: 0.8125rem; }
+  .remove-button { flex: 0 0 auto; padding: 8px; }
+  @media (min-width: 540px) { main { padding: 40px 28px 64px; } }
+</style>

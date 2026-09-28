@@ -7,7 +7,7 @@ import { anonymousBuyers, purchases, reportSnapshots, reportEntitlements, sajuPr
 import * as cancel from '../../../pages/api/payments/kakaopay/cancel'
 import * as fail from '../../../pages/api/payments/kakaopay/fail'
 
-const { workerEnv } = vi.hoisted(() => ({ workerEnv: { KAKAOPAY_SECRET_KEY: 'mock-secret', saju_db: undefined as D1Database | undefined } }))
+const { workerEnv } = vi.hoisted(() => ({ workerEnv: { KAKAOPAY_ENVIRONMENT: 'test', KAKAOPAY_CID: 'TC0ONETIME', KAKAOPAY_SECRET_KEY: 'mock-secret', saju_db: undefined as D1Database | undefined } }))
 vi.mock('astro:env/server', () => ({}))
 vi.mock('cloudflare:workers', () => ({ env: workerEnv }))
 
@@ -41,6 +41,8 @@ beforeAll(async () => {
 }, 30000)
 
 beforeEach(async () => {
+  workerEnv.KAKAOPAY_ENVIRONMENT = 'test'
+  workerEnv.KAKAOPAY_CID = 'TC0ONETIME'
   await d1.batch(['report_entitlements', 'report_snapshots', 'purchases', 'anonymous_buyers', 'saju_profiles']
     .map((table) => d1.prepare(`DELETE FROM ${table}`)))
   const now = new Date()

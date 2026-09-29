@@ -1,0 +1,263 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CopySemantics v1 > snapshots fixture 1 deterministic titles, previous short meanings and new copy inputs for manual review 1`] = `
+[
+  {
+    "chapter": 1,
+    "copyIntent": "contrast",
+    "deterministicTitle": "겉의 방식과 내부의 받침, 왜 자꾸 되돌아볼까요",
+    "personalized": true,
+    "sources": [
+      {
+        "behavior": [],
+        "code": "surface_support_contrast",
+        "confidence": "strong",
+        "newMeaning": "겉으로 드러난 방식과 내부의 받침을 함께 고려하는 관점",
+        "previousMeaning": [
+          "겉의 방식과 내부의 받침을 함께 살피는 관점",
+        ],
+      },
+    ],
+  },
+  {
+    "chapter": 2,
+    "copyIntent": "identity",
+    "deterministicTitle": "준비와 분석을 함께 놓고 보면",
+    "personalized": true,
+    "sources": [
+      {
+        "behavior": [
+          "내용을 충분히 살펴보고 정리하려는 방향",
+        ],
+        "code": "preparation_analysis_focus",
+        "confidence": "strong",
+        "newMeaning": "내용을 충분히 살펴보고 정리하려는 방향",
+        "previousMeaning": [
+          "준비와 분석을 깊게 가져가는 방식",
+        ],
+      },
+    ],
+  },
+  {
+    "chapter": 3,
+    "copyIntent": "exploratory_question",
+    "deterministicTitle": "사람들 사이에서 살펴볼 지점",
+    "personalized": false,
+    "sources": [
+      {
+        "behavior": [
+          "내용을 충분히 살펴보고 정리하려는 방향",
+        ],
+        "code": "preparation_analysis_focus",
+        "confidence": "strong",
+        "newMeaning": "내용을 충분히 살펴보고 정리하려는 방향",
+        "previousMeaning": [
+          "준비와 분석을 깊게 가져가는 방식",
+        ],
+      },
+    ],
+  },
+  {
+    "chapter": 4,
+    "copyIntent": "contrast",
+    "deterministicTitle": "겉으로 드러난 것과 내부의 받침",
+    "personalized": true,
+    "sources": [
+      {
+        "behavior": [],
+        "code": "surface_support_contrast",
+        "confidence": "strong",
+        "newMeaning": "겉으로 드러난 방식과 내부의 받침을 함께 고려하는 관점",
+        "previousMeaning": [
+          "겉의 방식과 내부의 받침을 함께 살피는 관점",
+        ],
+      },
+    ],
+  },
+  {
+    "chapter": 5,
+    "copyIntent": "exploratory_question",
+    "deterministicTitle": "가까운 관계를 이야기할 때",
+    "personalized": false,
+    "sources": [
+      {
+        "behavior": [],
+        "code": "surface_support_contrast",
+        "confidence": "strong",
+        "newMeaning": "겉으로 드러난 방식과 내부의 받침을 함께 고려하는 관점",
+        "previousMeaning": [
+          "겉의 방식과 내부의 받침을 함께 살피는 관점",
+        ],
+      },
+    ],
+  },
+  {
+    "chapter": 6,
+    "copyIntent": "statement",
+    "deterministicTitle": "일에서 드러나는 준비와 분석",
+    "personalized": true,
+    "sources": [
+      {
+        "behavior": [
+          "내용을 충분히 살펴보고 정리하려는 방향",
+        ],
+        "code": "preparation_analysis_focus",
+        "confidence": "strong",
+        "newMeaning": "내용을 충분히 살펴보고 정리하려는 방향",
+        "previousMeaning": [
+          "준비와 분석을 깊게 가져가는 방식",
+        ],
+      },
+    ],
+  },
+  {
+    "chapter": 7,
+    "copyIntent": "statement",
+    "deterministicTitle": "겉의 방식과 내부의 받침, 잘 사용할 때의 장점",
+    "personalized": true,
+    "sources": [
+      {
+        "behavior": [],
+        "code": "surface_support_contrast",
+        "confidence": "strong",
+        "newMeaning": "겉으로 드러난 방식과 내부의 받침을 함께 고려하는 관점",
+        "previousMeaning": [
+          "겉의 방식과 내부의 받침을 함께 살피는 관점",
+        ],
+      },
+      {
+        "behavior": [
+          "내용을 충분히 살펴보고 정리하려는 방향",
+        ],
+        "code": "preparation_analysis_focus",
+        "confidence": "strong",
+        "newMeaning": "내용을 충분히 살펴보고 정리하려는 방향",
+        "previousMeaning": [
+          "준비와 분석을 깊게 가져가는 방식",
+        ],
+      },
+    ],
+  },
+  {
+    "chapter": 8,
+    "copyIntent": "exploratory_question",
+    "deterministicTitle": "여러 방향을 함께 놓고 보면",
+    "personalized": false,
+    "sources": [
+      {
+        "behavior": undefined,
+        "code": "preparation_analysis_focus",
+        "confidence": "strong",
+        "newMeaning": undefined,
+        "previousMeaning": [],
+      },
+    ],
+  },
+  {
+    "chapter": 9,
+    "copyIntent": "time_change",
+    "deterministicTitle": "지나온 흐름에 놓였던 준비와 분석",
+    "personalized": true,
+    "sources": [
+      {
+        "behavior": [],
+        "code": "past_resource_introduced",
+        "confidence": "medium",
+        "newMeaning": "내용을 살펴보고 정리하는 쪽이 새로 강조되는 흐름",
+        "previousMeaning": [
+          "준비와 분석 새로 강조",
+        ],
+      },
+    ],
+  },
+  {
+    "chapter": 10,
+    "copyIntent": "time_change",
+    "deterministicTitle": "2026년에 함께 살필 책임과 구조",
+    "personalized": true,
+    "sources": [
+      {
+        "behavior": [],
+        "code": "current_daewoon_officer_emphasis",
+        "confidence": "strong",
+        "newMeaning": "맡은 역할과 기준을 정리하는 쪽이 상대적으로 강조되는 흐름",
+        "previousMeaning": [
+          "책임과 구조 방향 강조",
+        ],
+      },
+      {
+        "behavior": [],
+        "code": "annual_target_officer_emphasis",
+        "confidence": "strong",
+        "newMeaning": "맡은 역할과 기준을 정리하는 쪽이 상대적으로 강조되는 흐름",
+        "previousMeaning": [
+          "책임과 구조 방향 강조",
+        ],
+      },
+    ],
+  },
+  {
+    "chapter": 11,
+    "copyIntent": "time_change",
+    "deterministicTitle": "다음 흐름에서 달라지는 준비와 분석",
+    "personalized": true,
+    "sources": [
+      {
+        "behavior": [],
+        "code": "future_resource_introduced",
+        "confidence": "medium",
+        "newMeaning": "내용을 살펴보고 정리하는 쪽이 새로 강조되는 흐름",
+        "previousMeaning": [
+          "준비와 분석 새로 강조",
+        ],
+      },
+    ],
+  },
+  {
+    "chapter": 12,
+    "copyIntent": "identity",
+    "deterministicTitle": "다시 놓고 보는 책임과 구조",
+    "personalized": true,
+    "sources": [
+      {
+        "behavior": [],
+        "code": "current_daewoon_officer_emphasis",
+        "confidence": "strong",
+        "newMeaning": "맡은 역할과 기준을 정리하는 쪽이 상대적으로 강조되는 흐름",
+        "previousMeaning": [
+          "책임과 구조 방향 강조",
+        ],
+      },
+      {
+        "behavior": [],
+        "code": "future_resource_introduced",
+        "confidence": "medium",
+        "newMeaning": "내용을 살펴보고 정리하는 쪽이 새로 강조되는 흐름",
+        "previousMeaning": [
+          "준비와 분석 새로 강조",
+        ],
+      },
+      {
+        "behavior": [],
+        "code": "surface_support_contrast",
+        "confidence": "strong",
+        "newMeaning": "겉으로 드러난 방식과 내부의 받침을 함께 고려하는 관점",
+        "previousMeaning": [
+          "겉의 방식과 내부의 받침을 함께 살피는 관점",
+        ],
+      },
+      {
+        "behavior": [
+          "내용을 충분히 살펴보고 정리하려는 방향",
+        ],
+        "code": "preparation_analysis_focus",
+        "confidence": "strong",
+        "newMeaning": "내용을 충분히 살펴보고 정리하려는 방향",
+        "previousMeaning": [
+          "준비와 분석을 깊게 가져가는 방식",
+        ],
+      },
+    ],
+  },
+]
+`;

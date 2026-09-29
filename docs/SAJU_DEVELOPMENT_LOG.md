@@ -1518,3 +1518,17 @@ InterpretationFacts, Signals, TopicSummary, renderer, deterministic report를 �
 최종 회귀 결과는 check/typecheck 통과, 29 files / 402 tests 통과, build 통과다.
 
 다음 시작점은 결과 페이지 UX v1 개선이며, 계산/engine/DB schema/LLM 로직은 변경하지 않는다.
+
+---
+
+## 38. Narrative 상품 구조 전환 및 Writer v3 실물 검수 (2026-09-29)
+
+무료 결과는 deterministic Free Hook 한 문장과 1,000원 Kakao Pay CTA로 구성한다. 무료 요청에서 OpenAI 호출은 0회이며, 기존 12개 locked headline preview는 production 경로에서 제거했다. 유료 결과는 entitlement 확인 후 최초 조회에서 12장 제목·본문을 AI Narrative Writer의 **한 API 요청**으로 생성하고 snapshot에 저장한다. 재조회는 snapshot을 사용한다. 장별 검증 실패는 해당 장만 deterministic fallback하며 retry는 없다.
+
+Narrative Writer v2는 유료 결과의 12장 coverage(primary / secondary / neutral_bridge / synthesis)를 갖춘다. 검증된 source의 재사용은 narrativeAngle로 역할을 나누며 새 FACT/CLAIM을 만들지 않는다. 관계·내면·반복 패턴의 직접 근거가 없는 장은 과잉 해석하지 않는다. v3는 AI의 역할을 해석이 아닌 자연스러운 한국어 작문으로 제한하고, 내부 분석어를 생활 언어로 옮기며 장 간 설명 반복과 긴 neutral bridge를 줄이도록 개선했다. 모델은 `gpt-5.6-luna`를 유지한다.
+
+fixture 1 실물 검수 최신 성공 결과(사용자 보고): AI 호출 1회, latency 약 24.8초, input 11,760 tokens, output 2,521 tokens. 12장 모두 AI로 생성되어 fallback, validation reject, global failure가 없다. 이전 chapter 12 `invalid_source_ref` 문제는 source whitelist 정합성 수정 후 통과했다. deterministic 대비 문체가 크게 개선됐고 6/8장, 9~11장, closing의 방향이 좋다. 다만 `준비와 분석`, `책임과 구조` 같은 분석어가 일부 남을 가능성은 다른 fixture와 비교해야 한다.
+
+개발자 검수 CLI는 코드 확인 기준 `node scripts/narrative-review.mjs --fixture <1-5>`를 지원한다. 기존 diagnostic 입력 5개를 재사용하고 실행마다 하나만 선택해 최대 1회 호출하며 `--all`과 자동 재시도는 없다. 다음은 fixture 2를 수동 실행한 뒤 3·4·5를 차례로 검수한다. 사람별 차별성, 표현·문법 반복, fixture 5의 relationship/recurring claim, 시간축 9~11장, closing의 개별 motif/claim 회수를 비교한다. 5개 실물 검수 전에는 allocation·prompt·model을 다시 조정하지 않는다. 구조 개선 후 Luna 품질이 부족할 때만 동일 Brief로 Sol A/B를 검토한다.
+
+비용·성능 원칙: 무료 AI 0회, 유료 purchase/report당 최대 1회, snapshot 재사용, retry 없음, D1 full scan·불필요한 row read 금지. 유료 생성 latency가 약 20~25초로 관찰돼 추후 생성 중 화면을 검토할 필요가 있으나 현재는 품질 검수가 우선이다. 이번 기록은 문서 파킹이며 코드·API 호출·배포 변경은 없다.

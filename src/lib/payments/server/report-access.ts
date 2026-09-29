@@ -117,7 +117,25 @@ export async function loadEntitledReportSnapshot(context: ReportContext) {
     schemaVersion: reportSnapshots.schemaVersion,
     methodologyVersionsJson: reportSnapshots.methodologyVersionsJson,
     referenceAt: reportSnapshots.referenceAt,
+    inputHash: reportSnapshots.inputHash,
     reportHash: reportSnapshots.reportHash,
+  }).from(reportSnapshots).where(eq(reportSnapshots.id, entitlement.snapshotId)).limit(1)
+  if (!snapshot || snapshot.purchaseId !== entitlement.purchaseId
+    || snapshot.profileId !== context.profileId || snapshot.reportYear !== context.reportYear) return null
+  return { snapshot, cacheControl: 'private, no-store' as const }
+}
+
+/** Read-only page/poll projection. It follows the same authenticated UNIQUE/PK
+ * path while avoiding generation-only snapshot metadata. */
+export async function loadEntitledReportSnapshotView(context: ReportContext) {
+  const entitlement = await findReportEntitlement(context)
+  if (!entitlement) return null
+  const [snapshot] = await context.db.select({
+    purchaseId: reportSnapshots.purchaseId,
+    profileId: reportSnapshots.profileId,
+    reportYear: reportSnapshots.reportYear,
+    reportJson: reportSnapshots.reportJson,
+    schemaVersion: reportSnapshots.schemaVersion,
   }).from(reportSnapshots).where(eq(reportSnapshots.id, entitlement.snapshotId)).limit(1)
   if (!snapshot || snapshot.purchaseId !== entitlement.purchaseId
     || snapshot.profileId !== context.profileId || snapshot.reportYear !== context.reportYear) return null

@@ -7,9 +7,15 @@ import type { AstroCookieSetOptions } from 'astro'
 import { createDb } from '../../../db/client'
 import { anonymousBuyers, purchases, reportEntitlements, reportSnapshots, sajuProfiles } from '../../../db/schema'
 import { findReportEntitlement, getOrCreateAnonymousBuyer, loadEntitledReportSnapshot, prepareAnonymousBuyerRateLimit } from './report-access'
-import { loadPaidReport } from './paid-report'
+import { generatePaidReport, loadPaidReport } from './paid-report'
+import { buildPaidNarrativeDraft } from '../../saju/server/paid-narrative-draft'
+import { renderDeterministicNarrative } from '../../saju/narrative/deterministic-writer'
+import { buildAiNarrativeRequest, type NarrativeJsonClient } from '../../saju/narrative/ai-writer'
+import { AiTransportFailure } from '../../saju/narrative/ai-failure'
 
 vi.mock('astro:env/server', () => ({}))
+const ai = vi.hoisted(() => ({ complete: vi.fn<NarrativeJsonClient['complete']>() }))
+vi.mock('../../saju/server/openai-narrative', () => ({ openAiNarrativeClient: ai }))
 
 const cookieKey = '__Host-saju-buyer-test'
 const digest = (token: string) => createHash('sha256').update(token).digest('hex')
@@ -77,6 +83,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   vi.restoreAllMocks()
+  ai.complete.mockReset()
   await d1.batch(['report_entitlements', 'report_snapshots', 'purchases', 'anonymous_buyers', 'saju_profiles']
     .map((table) => d1.prepare(`DELETE FROM ${table}`)))
   queries = []
@@ -148,7 +155,186 @@ describe('anonymous buyer authentication', () => {
 })
 
 describe('report entitlement and snapshot access', () => {
-  it('supplies the frozen snapshot display text even after the profile changes', async () => {
+  async function narrativeFixture() {
+    const { ctx } = await paidFixture()
+    const draft = buildPaidNarrativeDraft({ birthDate: '1988-09-13', birthTime: '13:04',
+      gender: 'female', calendarType: 'solar', isLeapMonth: false }, date)
+    const json = JSON.stringify(draft.report)
+    await db.update(reportSnapshots).set({ reportJson: json, reportHash: digest(json), schemaVersion: 'paid-narrative-v1' })
+    return { ctx, briefs: draft.report.paidNarrative.briefs }
+  }
+
+  async function legacyNarrativeFixture() {
+    const { ctx } = await paidFixture()
+    await db.update(sajuProfiles).set({ birthDate: '1988-09-13', birthTime: '13:04', gender: 'female' })
+    const legacy = JSON.stringify({ title: '주제별 사주 요약', intro: '예전 안내', closing: '예전 마무리',
+      sections: [{ headline: '예전 제목', body: '예전 유료 본문', scopeLabel: '올해' }] })
+    await db.update(reportSnapshots).set({ reportJson: legacy, reportHash: digest(legacy) })
+    return ctx
+  }
+
+  it('upgrades an entitled legacy snapshot into a reusable 12-chapter narrative', async () => {
+    const ctx = await legacyNarrativeFixture()
+    expect(await loadPaidReport(ctx)).toEqual({ entitled: true, status: 'generating', report: null })
+    expect(ai.complete).not.toHaveBeenCalled()
+    ai.complete.mockImplementation(async (request) => {
+      const input = JSON.parse(request.input)
+      expect(input.chapters).toHaveLength(12)
+      expect(request.input).not.toContain('예전 유료 본문')
+      const motif = input.chapters.find((chapter: { chapter: number }) => chapter.chapter === 2).motifRef
+      const sourceRefs = [{ kind: 'motif', code: motif.code }]
+      return { text: JSON.stringify({ chapters: [{ chapter: 2, title: '새 이야기의 시작',
+        paragraphs: [{ text: '이 이미지를 이야기의 시작점으로 놓아둘게요.', sourceRefs }], sourceRefs }] }) }
+    })
+    const ready = await generatePaidReport(ctx)
+    expect(ready.status).toBe('ready')
+    expect(ready.report?.sections).toHaveLength(12)
+    expect(ready.report?.sections.some((section) => section.headline === '새 이야기의 시작')).toBe(true)
+    expect(JSON.stringify(ready)).not.toContain('예전 유료 본문')
+    const [stored] = await db.select().from(reportSnapshots)
+    expect(stored.schemaVersion).toBe('paid-narrative-v1')
+    expect(stored.reportHash).toBe(digest(stored.reportJson))
+    expect(stored.reportJson).not.toMatch(/예전 유료 본문|briefs|evidenceSummary/)
+    expect(await loadPaidReport(ctx)).toEqual(ready)
+    expect(await generatePaidReport(ctx)).toEqual(ready)
+    expect(ai.complete).toHaveBeenCalledTimes(1)
+  })
+
+  it('lets only one concurrent legacy request call AI and stores a 12-chapter fallback on failure', async () => {
+    const ctx = await legacyNarrativeFixture()
+    ai.complete.mockRejectedValue(new Error('provider failure'))
+    const results = await Promise.all([generatePaidReport(ctx), generatePaidReport(ctx)])
+    expect(ai.complete).toHaveBeenCalledTimes(1)
+    expect(results.every((result) => result.status === 'generating' || result.status === 'fallback_ready')).toBe(true)
+    const ready = await loadPaidReport(ctx)
+    expect(ready.status).toBe('fallback_ready')
+    expect(ready.report?.sections).toHaveLength(12)
+    expect(JSON.stringify(ready)).not.toContain('예전 유료 본문')
+    expect(await generatePaidReport(ctx)).toEqual(ready)
+    expect(ai.complete).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not read or upgrade a legacy-like snapshot without entitlement', async () => {
+    const ctx = await legacyNarrativeFixture()
+    await db.delete(reportEntitlements)
+    queries.length = 0
+    expect(await generatePaidReport(ctx)).toEqual({ entitled: false, status: 'unpaid', report: null })
+    expect(ai.complete).not.toHaveBeenCalled()
+    expect(queries.join(' ')).not.toMatch(/report_snapshots|saju_profiles/)
+  })
+
+  it('makes one authorized narrative request, stores projected chapters and reuses them on later visits', async () => {
+    const { ctx, briefs } = await narrativeFixture()
+    const log = vi.spyOn(console, 'info').mockImplementation(() => {})
+    expect(briefs.map((brief) => brief.chapter)).toEqual(Array.from({ length: 12 }, (_, i) => i + 1))
+    expect(buildAiNarrativeRequest(briefs).input.length).toBeLessThan(50_000)
+    ai.complete.mockImplementation(async (request) => {
+      const input = JSON.parse(request.input)
+      expect(input.chapters).toHaveLength(briefs.length)
+      expect(request.input).not.toMatch(/buyer|payment|birthDate|birthTime/)
+      const motif = input.chapters.find((chapter: { chapter: number }) => chapter.chapter === 2).motifRef
+      const sourceRefs = [{ kind: 'motif', code: motif.code }]
+      return { text: JSON.stringify({ chapters: [{ chapter: 2, title: '이미지에서 시작하는 나의 이야기',
+        paragraphs: [{ text: '이 이미지를 이야기의 시작점으로 놓아둘게요.', sourceRefs },
+          { text: '이 이미지는 문학적인 비유예요.', sourceRefs }], sourceRefs }] }) }
+    })
+    expect(await loadPaidReport(ctx)).toEqual({ entitled: true, status: 'generating', report: null })
+    expect(ai.complete).not.toHaveBeenCalled()
+    const result = await generatePaidReport(ctx)
+    expect(ai.complete).toHaveBeenCalledTimes(1)
+    expect(result.entitled).toBe(true)
+    expect(result.report?.sections).toHaveLength(briefs.length)
+    expect(result.report?.sections).toHaveLength(12)
+    expect(result.report?.sections.some((section) => section.headline === '이미지에서 시작하는 나의 이야기')).toBe(true)
+    expect(log).toHaveBeenCalledTimes(1)
+    expect(JSON.parse(String(log.mock.calls[0]?.[0]))).toMatchObject({
+      event: 'paid_narrative_generation_complete', outcome: 'partial_ai', model: 'gpt-5.6-luna',
+      fallbackChapterCount: 11, validationRejectCount: 0, snapshotSaved: true,
+    })
+    expect(JSON.stringify(result)).not.toMatch(/paidNarrative|sourceRefs|evidence|allowedPoints|buyer|snapshot/)
+    await db.update(sajuProfiles).set({ birthDate: '2000-01-01' })
+    expect(await loadPaidReport(ctx)).toEqual(result)
+    expect(ai.complete).toHaveBeenCalledTimes(1)
+    const [stored] = await db.select().from(reportSnapshots)
+    expect(stored.reportHash).toBe(digest(stored.reportJson))
+    expect(stored.reportJson).not.toMatch(/briefs|evidenceSummary/)
+  })
+
+  it('logs only allowlisted provider failure fields for a paid fallback', async () => {
+    const { ctx } = await narrativeFixture()
+    const log = vi.spyOn(console, 'info').mockImplementation(() => {})
+    ai.complete.mockRejectedValue(new AiTransportFailure('provider_http_error', 400,
+      { type: 'invalid_request_error', code: 'invalid_json_schema', param: 'text.format.schema' }))
+    const result = await generatePaidReport(ctx)
+    expect(result.status).toBe('fallback_ready')
+    expect(log).toHaveBeenCalledTimes(1)
+    const event = JSON.parse(String(log.mock.calls[0]?.[0]))
+    expect(event).toMatchObject({ event: 'paid_narrative_generation_complete', outcome: 'fallback',
+      model: 'gpt-5.6-luna', fallbackChapterCount: 12, validationRejectCount: 0,
+      safeFailureCode: 'provider_http_error', httpStatus: 400, stage: 'provider_response', snapshotSaved: true,
+      providerError: { type: 'invalid_request_error', code: 'invalid_json_schema', param: 'text.format.schema' } })
+    expect(event.durationMs).toEqual(expect.any(Number))
+    expect(JSON.stringify(event)).not.toMatch(/briefs|evidence|sourceRefs|birthDate|buyer|payment|prompt|raw/)
+  })
+
+  it('atomically consumes one attempt across simultaneous paid visits and persists fallback on AI failure', async () => {
+    const { ctx, briefs } = await narrativeFixture()
+    ai.complete.mockRejectedValue(new Error('provider failure'))
+    const results = await Promise.all([generatePaidReport(ctx), generatePaidReport(ctx)])
+    expect(ai.complete).toHaveBeenCalledTimes(1)
+    expect(results.some((result) => result.status === 'fallback_ready')).toBe(true)
+    expect(results.every((result) => result.status === 'generating' || result.status === 'fallback_ready')).toBe(true)
+    const ready = results.find((result) => result.status === 'fallback_ready')!
+    expect(ready.report?.sections.map((section) => section.body)).toEqual(
+      renderDeterministicNarrative(briefs).map((chapter) => chapter.paragraphs.map((p) => p.text).join('\n\n')))
+    expect(await loadPaidReport(ctx)).toEqual(ready)
+    expect(ai.complete).toHaveBeenCalledTimes(1)
+  })
+
+  it('never calls AI for a new-format snapshot without entitlement', async () => {
+    const { ctx } = await narrativeFixture()
+    await db.delete(reportEntitlements)
+    queries.length = 0
+    expect(await generatePaidReport(ctx)).toEqual({ entitled: false, status: 'unpaid', report: null })
+    expect(ai.complete).not.toHaveBeenCalled()
+    expect(queries.join(' ')).not.toContain('report_snapshots')
+  })
+
+  it('retains durable fallback and never retries AI if saving the response fails', async () => {
+    const { ctx, briefs } = await narrativeFixture()
+    const chapter = JSON.parse(buildAiNarrativeRequest(briefs).input).chapters[1]
+    const sourceRefs = [{ kind: 'motif', code: chapter.motifRef.code }]
+    ai.complete.mockResolvedValue({ text: JSON.stringify({ chapters: [{ chapter: 2,
+      title: '이미지에서 시작하는 이야기', paragraphs: [{ text: '이 이미지를 시작점으로 놓아둘게요.', sourceRefs }],
+      sourceRefs }] }) })
+    const update = db.update.bind(db)
+    let writes = 0
+    vi.spyOn(db, 'update').mockImplementation((table) => {
+      writes += 1
+      if (writes === 2) throw new Error('simulated save failure')
+      return update(table)
+    })
+    const result = await generatePaidReport(ctx)
+    expect(writes).toBe(3)
+    expect(result.report?.sections).toHaveLength(briefs.length)
+    expect(await loadPaidReport(ctx)).toEqual(result)
+    expect(ai.complete).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps corrupt stored briefs out of the AI request and returns a safe failed state', async () => {
+    const { ctx } = await narrativeFixture()
+    const [row] = await db.select().from(reportSnapshots)
+    const data = JSON.parse(row.reportJson)
+    data.paidNarrative.briefs[0].allowedPoints = null
+    await db.update(reportSnapshots).set({ reportJson: JSON.stringify(data) })
+    expect(await loadPaidReport(ctx)).toEqual({ entitled: true, status: 'generating', report: null })
+    const result = await generatePaidReport(ctx)
+    expect(result).toEqual({ entitled: true, status: 'failed', report: null })
+    expect(ai.complete).not.toHaveBeenCalled()
+    expect(JSON.stringify(result)).not.toContain('paidNarrative')
+  })
+
+  it('treats a legacy paid snapshot as generating without exposing its body or reading the profile on GET', async () => {
     const { ctx } = await paidFixture()
     const report = { title: '구매 당시 제목', intro: '구매 당시 안내', closing: '구매 당시 마무리',
       sections: [{ headline: '고정된 제목', body: '구매 당시 유료 본문', scopeLabel: '올해' }] }
@@ -157,7 +343,7 @@ describe('report entitlement and snapshot access', () => {
     await db.update(sajuProfiles).set({ birthDate: '2000-01-01' })
     queries.length = 0
     const display = await loadPaidReport(ctx)
-    expect(display).toEqual({ entitled: true, report })
+    expect(display).toEqual({ entitled: true, status: 'generating', report: null })
     expect(JSON.stringify(display)).not.toMatch(/provenance|private internal evidence/)
     expect(queries).toHaveLength(3)
     expect(queries.join(' ')).not.toContain('saju_profiles')
@@ -168,15 +354,15 @@ describe('report entitlement and snapshot access', () => {
     await db.delete(reportEntitlements)
     queries.length = 0
     const display = await loadPaidReport(ctx)
-    expect(display).toEqual({ entitled: false, report: null })
+    expect(display).toEqual({ entitled: false, status: 'unpaid', report: null })
     expect(JSON.stringify(display)).not.toContain('paid body')
     expect(queries.join(' ')).not.toContain('report_snapshots')
   })
 
-  it('keeps access but does not regenerate or expose malformed stored report JSON', async () => {
+  it('keeps malformed legacy JSON out of the read-only paid display projection', async () => {
     const { ctx } = await paidFixture()
     await db.update(reportSnapshots).set({ reportJson: '{broken private data' })
-    expect(await loadPaidReport(ctx)).toEqual({ entitled: true, report: null })
+    expect(await loadPaidReport(ctx)).toEqual({ entitled: true, status: 'generating', report: null })
   })
 
   it('returns only entitlement metadata without reading report JSON', async () => {

@@ -6,7 +6,7 @@ import { env } from 'cloudflare:workers'
 import { eq } from 'drizzle-orm'
 import { createDb } from '../../db/client'
 import { sajuProfiles } from '../../db/schema'
-import { buildResultPageData } from '../../lib/saju/server/result-page'
+import { buildResultPageView } from '../../lib/saju/server/result-page'
 import { loadPaidReport } from '../../lib/payments/server/paid-report'
 
 Astro.response.headers.set('Cache-Control', 'private, no-store')
@@ -43,23 +43,22 @@ if (profile.calendarType !== 'solar' && profile.calendarType !== 'lunar') {
 const paymentConfig = getPaymentIdentity()
 const paid = paymentConfig ? await loadPaidReport({
   db, cookies: Astro.cookies, environment: paymentConfig.environment, profileId: id, reportYear: 2026,
-}) : { entitled: false, report: null }
+}) : { entitled: false as const, status: 'unpaid' as const, report: null }
 
-const { pillars, luck, daewoonNotice, report } = buildResultPageData({
+const { page: { pillars, luck, daewoonNotice }, freeHook } = buildResultPageView({
   birthDate: profile.birthDate,
   birthTime: profile.birthTime,
   gender: profile.gender,
   calendarType: profile.calendarType,
   isLeapMonth: profile.isLeapMonth,
-})
+}, !paid.entitled)
 
 // Presentation only: preserve the supplied period and scope information.
 const dateRange = (period: string) => period.match(/\d{4}-\d{2}-\d{2}/g)?.join(' ~ ') ?? period
-const scopeBadges: Record<string, string> = {
-  '당분간 이어질 수 있는 배경': '장기 배경',
-  '올해 상대적으로 두드러질 수 있음': '올해',
-  '장기 요인과 올해 요인이 겹침': '장기+올해',
-}
+const chapterAnimals = [
+  ['🐭', '쥐'], ['🐮', '소'], ['🐯', '호랑이'], ['🐰', '토끼'], ['🐲', '용'], ['🐍', '뱀'],
+  ['🐴', '말'], ['🐑', '양'], ['🐵', '원숭이'], ['🐔', '닭'], ['🐶', '개'], ['🐷', '돼지'],
+] as const
 ---
 
 <html lang="ko">
@@ -111,52 +110,64 @@ const scopeBadges: Record<string, string> = {
             </> : <p class="notice">2026년 세운 정보를 확인할 수 없습니다.</p>}
           </article>
         </div>
-        <p class="section-note">기간은 한국시간 기준이며, 종료 시각 직전까지 적용됩니다. 아래 요약에서 ‘올해’는 2026년 세운을 뜻합니다.</p>
-      </section>
-      <section aria-labelledby="report-heading">
-        <h2 id="report-heading">주제별로 살펴보는 나의 흐름</h2>
-        <p class="section-note">일과 관계, 변화의 시기에 참고할 내용을 모았어요. 배지는 각 내용이 해당하는 기간을 알려줘요.</p>
-        {report.sections.length === 0 && <p class="panel notice">현재 표시할 주제별 요약이 없습니다.</p>}
-        <div class="topic-list">
-        {report.sections.map((section) => (
-          <article class="panel topic-card">
-            <ul class="badges" aria-label="해당 기간">
-              {section.scopeLabel.split(' · ').filter(Boolean).map((label) => <li class="badge">{scopeBadges[label] ?? label}</li>)}
-            </ul>
-            <h3>{section.headline}</h3>
-            <p>{section.body}</p>
-          </article>
-        ))}
-        </div>
+        <p class="section-note">기간은 한국시간 기준이며, 종료 시각 직전까지 적용됩니다.</p>
       </section>
       <section class="panel" aria-labelledby="purchase-heading">
-        <h2 id="purchase-heading">2026년 상세 리포트</h2>
+        <h2 id="purchase-heading">당신의 사주 이야기</h2>
         {paid.entitled ? <>
-          <p class="access-note">상세 리포트 이용 권한이 있습니다.</p>
+          <p class="access-note">결제가 완료됐어요.</p>
           {paid.report ? <div class="paid-report">
             <header class="paid-report-header">
+              <p class="report-ready">당신을 위한 이야기가 준비됐어요</p>
               <h3>{paid.report.title}</h3>
-              <p class="notice">{paid.report.intro}</p>
+              <p class="paid-intro">사주에 담긴 모습을 열두 편의 이야기로 천천히 이어가 볼게요.</p>
             </header>
-            <div class="topic-list">
-            {paid.report.sections.map((section) => (
-              <article class="panel paid-topic">
-                <p class="paid-scope">{section.scopeLabel}</p>
+            <div class="paid-story-list">
+            {paid.report.sections.map((section, index) => (
+              <article class="paid-topic">
+                <p class="chapter-marker" aria-label={`${index + 1}번째 이야기, ${chapterAnimals[index]?.[1] ?? ''}`}>
+                  <span aria-hidden="true">{chapterAnimals[index]?.[0] ?? '✦'}</span>
+                </p>
                 <h4>{section.headline}</h4>
-                <p class="paid-body">{section.body}</p>
+                <div class="paid-body">
+                  {section.body.split(/\n\n+/).filter(Boolean).map((paragraph) => <p>{paragraph}</p>)}
+                </div>
               </article>
             ))}
             </div>
-            <p class="notice paid-closing">{paid.report.closing}</p>
-          </div> : <p class="notice">상세 리포트를 표시할 수 없습니다. 잠시 후 다시 확인해 주세요.</p>}
+            {paid.report.closing && <p class="paid-closing">{paid.report.closing}</p>}
+          </div> : paid.status === 'generating' ? <div id="paid-generation" class="generation" data-endpoint={`/api/reports/${encodeURIComponent(id)}`}>
+            <div class="generation-heading">
+              <span class="spinner" aria-hidden="true"></span>
+              <div>
+                <h3>당신의 사주 이야기를 풀고 있어요.</h3>
+                <p>12가지 흐름을 하나씩 정리하고 있습니다.</p>
+              </div>
+            </div>
+            <div class="chapter-skeleton" aria-hidden="true">
+              {chapterAnimals.map(([animal], index) => <div class="skeleton-row">
+                <span>{animal}</span><i style={`--delay:${index * 80}ms`}></i>
+              </div>)}
+            </div>
+            <p id="generation-message" class="generation-note" role="status" aria-live="polite">잠시만 기다려 주세요. 이 화면은 자동으로 바뀝니다.</p>
+            <button id="generation-recheck" class="secondary-button" type="button" hidden>다시 확인하기</button>
+          </div> : <div class="generation-error">
+            <p>상세 리포트를 준비하는 데 시간이 더 필요해요. 잠시 후 다시 확인해 주세요.</p>
+            <button id="generation-recheck" class="secondary-button" type="button">다시 확인하기</button>
+          </div>}
         </> : <>
-          <p class="notice">나의 사주와 올해 운의 흐름을 리포트로 살펴보세요.<br />결제 후 이 페이지에서 확인할 수 있어요.</p>
+          <p class="free-hook">{freeHook?.text}</p>
+          <p class="notice">이 성향이 관계·일·선택·앞으로의 흐름에서 어떻게 나타나는지 12개의 이야기로 풀어드려요.</p>
           <p class="purchase-price">1,000원</p>
           <button id="purchase-report" type="button" data-profile-id={id} aria-describedby="purchase-test-note">상세 리포트 보기</button>
           <p id="purchase-test-note" class="purchase-note">카카오페이 테스트 결제</p>
           <p id="purchase-message" class="notice" role="status" aria-live="polite"></p>
         </>}
       </section>
+      <nav class="result-links" aria-label="결과 페이지 이동">
+        <a href="/">메인으로</a>
+        <a href="/history">최근 결과</a>
+      </nav>
     </main>
     <script>
       import { startReportPurchase } from '../../lib/payments/client/report-purchase'
@@ -168,6 +179,53 @@ const scopeBadges: Record<string, string> = {
         button.addEventListener('click', () => {
           void startReportPurchase(button, message, profileId)
         })
+      }
+
+      const generation = document.querySelector<HTMLElement>('#paid-generation')
+      const generationMessage = document.querySelector<HTMLParagraphElement>('#generation-message')
+      const recheck = document.querySelector<HTMLButtonElement>('#generation-recheck')
+      const reloadWhenReady = (status: unknown) => {
+        if (status === 'ready' || status === 'fallback_ready') {
+          window.location.reload()
+          return true
+        }
+        return false
+      }
+      const checkStatus = async (endpoint: string) => {
+        const response = await fetch(endpoint, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+        if (!response.ok) return 'failed'
+        const body: unknown = await response.json()
+        return body && typeof body === 'object' && 'status' in body ? body.status : 'failed'
+      }
+      if (generation?.dataset.endpoint && generationMessage && recheck) {
+        const endpoint = generation.dataset.endpoint
+        let stopped = false
+        const stopWithRetry = () => {
+          stopped = true
+          generationMessage.textContent = '준비가 조금 길어지고 있어요. 잠시 후 다시 확인해 주세요.'
+          recheck.hidden = false
+        }
+        const poll = async () => {
+          if (stopped) return
+          try {
+            const status = await checkStatus(endpoint)
+            if (reloadWhenReady(status)) return
+            if (status === 'failed' || status === 'unpaid') return stopWithRetry()
+          } catch { /* Keep the calm waiting state during a temporary network failure. */ }
+          window.setTimeout(() => void poll(), 2500)
+        }
+        recheck.addEventListener('click', () => window.location.reload())
+        window.setTimeout(() => void poll(), 2500)
+        void fetch(endpoint, { method: 'POST', headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+          .then((response) => response.ok ? response.json() : { status: 'failed' })
+          .then((body: unknown) => {
+            const status = body && typeof body === 'object' && 'status' in body ? body.status : 'failed'
+            if (!reloadWhenReady(status) && (status === 'failed' || status === 'unpaid')) stopWithRetry()
+          })
+          .catch(() => stopWithRetry())
+        window.setTimeout(stopWithRetry, 90000)
+      } else if (recheck) {
+        recheck.addEventListener('click', () => window.location.reload())
       }
     </script>
   </body>
@@ -202,21 +260,41 @@ const scopeBadges: Record<string, string> = {
   summary { padding: 12px 0; min-height: 44px; cursor: pointer; }
   summary:focus-visible { outline: 2px solid #356456; outline-offset: 3px; border-radius: 4px; }
   details p { padding-bottom: 4px; }
-  .topic-list { display: grid; gap: 16px; margin-top: 20px; }
-  .badges { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0 0 12px; list-style: none; }
-  .badge { background: #eaf2ed; color: #305747; border: 1px solid #d4e4da; border-radius: 999px; font-size: 0.8125rem; font-weight: 600; padding: 3px 10px; }
-  .topic-card > p { margin-top: 12px; line-height: 1.85; }
   .purchase-price { margin-top: 24px; font-size: 1.75rem; font-weight: 700; line-height: 1.3; font-variant-numeric: tabular-nums; }
+  .free-hook { margin-top: 20px; padding: 24px 20px; border-left: 4px solid #356456; border-radius: 12px; background: #eaf2ed; color: #255344; font-size: clamp(1.25rem, 4.5vw, 1.6rem); font-weight: 700; line-height: 1.6; }
   #purchase-report { display: block; width: 100%; min-height: 48px; margin-top: 16px; padding: 12px 20px; border: 0; border-radius: 10px; background: #255344; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
   .purchase-note { margin-top: 8px; color: #52625d; font-size: 0.8125rem; text-align: center; }
   .access-note { margin-top: 8px; color: #52625d; font-size: 0.8125rem; }
   .paid-report { margin-top: 24px; padding-top: 24px; border-top: 1px solid #dce3df; }
-  .paid-report-header h3 { font-size: 1.25rem; overflow-wrap: anywhere; }
-  .paid-topic { background: #f4f7f5; border-radius: 12px; }
-  .paid-scope { color: #356456; font-size: 0.8125rem; }
-  .paid-topic h4 { margin: 8px 0 0; font-size: 1.1rem; line-height: 1.5; overflow-wrap: anywhere; }
-  .paid-body { margin-top: 12px; line-height: 1.9; white-space: pre-line; }
-  .paid-closing { margin-top: 24px; padding-top: 20px; border-top: 1px solid #dce3df; }
+  .paid-report-header { max-width: 620px; }
+  .report-ready { color: #356456; font-size: 0.8125rem; font-weight: 700; }
+  .paid-report-header h3 { margin-top: 6px; font-size: clamp(1.45rem, 5vw, 1.85rem); overflow-wrap: anywhere; }
+  .paid-intro { margin-top: 12px; color: #52625d; }
+  .paid-story-list { margin-top: 36px; }
+  .paid-topic { position: relative; max-width: 640px; padding: 8px 0 36px 48px; border-left: 1px solid #dce3df; }
+  .paid-topic + .paid-topic { padding-top: 28px; }
+  .chapter-marker { position: absolute; left: -20px; top: 2px; display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid #d4e4da; border-radius: 50%; background: #f4f7f5; font-size: 1.15rem; }
+  .paid-topic + .paid-topic .chapter-marker { top: 22px; }
+  .paid-topic h4 { margin: 0; color: #24332f; font-size: clamp(1.15rem, 4vw, 1.35rem); line-height: 1.5; overflow-wrap: anywhere; }
+  .paid-body { margin-top: 16px; color: #344640; line-height: 1.95; }
+  .paid-body p + p { margin-top: 14px; }
+  .paid-closing { max-width: 640px; margin-top: 8px; padding: 24px 0 4px; border-top: 1px solid #dce3df; color: #344640; line-height: 1.95; }
+  .generation { margin-top: 24px; padding-top: 24px; border-top: 1px solid #dce3df; }
+  .generation-heading { display: flex; align-items: flex-start; gap: 14px; }
+  .generation-heading h3 { font-size: 1.2rem; }
+  .generation-heading p, .generation-note { margin-top: 6px; color: #52625d; font-size: 0.9rem; }
+  .spinner { flex: 0 0 auto; width: 24px; height: 24px; margin-top: 3px; border: 2px solid #d4e4da; border-top-color: #356456; border-radius: 50%; animation: spin 1s linear infinite; }
+  .chapter-skeleton { display: grid; gap: 8px; margin-top: 24px; }
+  .skeleton-row { display: flex; align-items: center; gap: 12px; min-height: 34px; }
+  .skeleton-row span { width: 24px; text-align: center; filter: grayscale(0.35); opacity: 0.7; }
+  .skeleton-row i { display: block; width: min(78%, 420px); height: 10px; border-radius: 999px; background: linear-gradient(90deg, #edf2ef 20%, #dfe9e3 45%, #edf2ef 70%); background-size: 240% 100%; animation: shimmer 1.8s ease-in-out infinite; animation-delay: var(--delay); }
+  .generation-error { margin-top: 20px; color: #52625d; }
+  .secondary-button { min-height: 44px; margin-top: 16px; padding: 10px 16px; border: 1px solid #b8c8c0; border-radius: 10px; background: #fff; color: #255344; font: inherit; font-weight: 700; cursor: pointer; }
+  .result-links { display: flex; gap: 10px; margin-top: 32px; }
+  .result-links a { flex: 1; padding: 12px 14px; border: 1px solid #dce3df; border-radius: 10px; background: #fff; color: #255344; font-weight: 700; text-align: center; text-decoration: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes shimmer { to { background-position: -240% 0; } }
+  @media (prefers-reduced-motion: reduce) { .spinner, .skeleton-row i { animation: none; } }
   #purchase-report:disabled { opacity: 0.65; cursor: wait; }
   #purchase-report:focus-visible { outline: 2px solid #356456; outline-offset: 3px; }
   @media (min-width: 640px) {

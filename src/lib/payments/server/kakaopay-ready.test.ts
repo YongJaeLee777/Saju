@@ -2,13 +2,14 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { createDb } from '../../../db/client'
 import { readyKakaoPayReport } from './kakaopay-ready'
 import { getOrCreateAnonymousBuyer, findReportEntitlement } from './report-access'
-import { buildResultReport } from '../../saju/server/result-page'
+import { buildPaidNarrativeDraft as buildResultReport } from '../../saju/server/paid-narrative-draft'
 
 const { workerEnv, draft } = vi.hoisted(() => ({
   workerEnv: { KAKAOPAY_ENVIRONMENT: 'test', KAKAOPAY_CID: 'TC0ONETIME', KAKAOPAY_SECRET_KEY: 'mock-secret', KAKAOPAY_CALLBACK_ORIGIN: 'https://saju.example' },
   draft: { pillars: [], daewoonNotice: null,
     luck: { referenceDate: '2026-09-19', currentDaewoon: null, currentAnnualLuck: null }, report: {
     title: 'Report', intro: 'Intro', closing: 'Closing',
+    paidNarrative: { version: 'paid-narrative-v1', state: 'pending', briefs: [] },
     sections: [{ topic: 'career', headline: 'Work', body: 'Private report', scopeLabel: 'background', methodologyVersion: 'topic-renderer-v1.2' }],
     provenance: [{ topic: 'career', signals: [], sourceSignalCodes: ['career_change_pressure'], dominantStrength: 'low', dominantPriority: 'low' }],
     sourceSignalCodes: ['career_change_pressure'], methodologyVersions: {
@@ -19,7 +20,7 @@ const { workerEnv, draft } = vi.hoisted(() => ({
 vi.mock('astro:env/server', () => ({}))
 vi.mock('cloudflare:workers', () => ({ env: workerEnv }))
 vi.mock('./report-access', () => ({ getOrCreateAnonymousBuyer: vi.fn(), findReportEntitlement: vi.fn() }))
-vi.mock('../../saju/server/result-page', () => ({ buildResultReport: vi.fn(() => structuredClone(draft)) }))
+vi.mock('../../saju/server/paid-narrative-draft', () => ({ buildPaidNarrativeDraft: vi.fn(() => structuredClone(draft)) }))
 
 let active: boolean
 let conflict: boolean

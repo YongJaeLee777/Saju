@@ -1,0 +1,935 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`WritingBrief v1 projection > snapshots 12-chapter coverage and source angles for five real fixtures 1`] = `
+[
+  {
+    "chapters": [
+      {
+        "bridge": [],
+        "chapter": 1,
+        "confidence": "strong",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "surface_support_contrast:hook_preview",
+        ],
+        "primary": [],
+        "role": "hook",
+        "secondary": [
+          "surface_support_contrast",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 2,
+        "confidence": "strong",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "preparation_analysis_focus:behavior",
+        ],
+        "primary": [],
+        "role": "coreIdentity",
+        "secondary": [
+          "preparation_analysis_focus",
+        ],
+      },
+      {
+        "bridge": [
+          "preparation_analysis_focus",
+        ],
+        "chapter": 3,
+        "confidence": null,
+        "coverageMode": "neutral_bridge",
+        "narrativeAngle": [
+          "preparation_analysis_focus:social_context_bridge",
+        ],
+        "primary": [],
+        "role": "socialSelf",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 4,
+        "confidence": "strong",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "surface_support_contrast:contrast",
+        ],
+        "primary": [
+          "surface_support_contrast",
+        ],
+        "role": "privateSelf",
+        "secondary": [],
+      },
+      {
+        "bridge": [
+          "surface_support_contrast",
+        ],
+        "chapter": 5,
+        "confidence": null,
+        "coverageMode": "neutral_bridge",
+        "narrativeAngle": [
+          "surface_support_contrast:relationship_context_bridge",
+        ],
+        "primary": [],
+        "role": "relationship",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 6,
+        "confidence": "strong",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "preparation_analysis_focus:work_lens",
+        ],
+        "primary": [
+          "preparation_analysis_focus",
+        ],
+        "role": "work",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 7,
+        "confidence": "strong",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "surface_support_contrast:positive_side",
+          "preparation_analysis_focus:positive_side",
+        ],
+        "primary": [],
+        "role": "strengthInUse",
+        "secondary": [
+          "surface_support_contrast",
+          "preparation_analysis_focus",
+        ],
+      },
+      {
+        "bridge": [
+          "preparation_analysis_focus",
+        ],
+        "chapter": 8,
+        "confidence": null,
+        "coverageMode": "neutral_bridge",
+        "narrativeAngle": [
+          "preparation_analysis_focus:pattern_caution_bridge",
+        ],
+        "primary": [],
+        "role": "recurringPattern",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 9,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "past_resource_introduced:temporal_context",
+        ],
+        "primary": [
+          "past_resource_introduced",
+        ],
+        "role": "past",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 10,
+        "confidence": "strong",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "current_daewoon_officer_emphasis:temporal_context",
+          "annual_target_officer_emphasis:temporal_context",
+        ],
+        "primary": [
+          "current_daewoon_officer_emphasis",
+          "annual_target_officer_emphasis",
+        ],
+        "role": "current",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 11,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "future_resource_introduced:temporal_context",
+        ],
+        "primary": [
+          "future_resource_introduced",
+        ],
+        "role": "future",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 12,
+        "confidence": "medium",
+        "coverageMode": "synthesis",
+        "narrativeAngle": [
+          "current_daewoon_officer_emphasis:synthesis",
+          "future_resource_introduced:synthesis",
+          "surface_support_contrast:synthesis",
+          "preparation_analysis_focus:synthesis",
+        ],
+        "primary": [],
+        "role": "closing",
+        "secondary": [
+          "current_daewoon_officer_emphasis",
+          "future_resource_introduced",
+          "surface_support_contrast",
+          "preparation_analysis_focus",
+        ],
+      },
+    ],
+    "input": "1988-09-13 13:04",
+  },
+  {
+    "chapters": [
+      {
+        "bridge": [],
+        "chapter": 1,
+        "confidence": "medium",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "visible_expression_pattern:hook_preview",
+          "preparation_analysis_focus:hook_preview",
+        ],
+        "primary": [],
+        "role": "hook",
+        "secondary": [
+          "visible_expression_pattern",
+          "preparation_analysis_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 2,
+        "confidence": "medium",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "preparation_analysis_focus:behavior",
+        ],
+        "primary": [],
+        "role": "coreIdentity",
+        "secondary": [
+          "preparation_analysis_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 3,
+        "confidence": "strong",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "visible_expression_pattern:social_lens",
+        ],
+        "primary": [
+          "visible_expression_pattern",
+        ],
+        "role": "socialSelf",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 4,
+        "confidence": "medium",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "preparation_analysis_focus:choice_lens",
+        ],
+        "primary": [],
+        "role": "privateSelf",
+        "secondary": [
+          "preparation_analysis_focus",
+        ],
+      },
+      {
+        "bridge": [
+          "visible_expression_pattern",
+        ],
+        "chapter": 5,
+        "confidence": null,
+        "coverageMode": "neutral_bridge",
+        "narrativeAngle": [
+          "visible_expression_pattern:relationship_context_bridge",
+        ],
+        "primary": [],
+        "role": "relationship",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 6,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "preparation_analysis_focus:work_lens",
+        ],
+        "primary": [
+          "preparation_analysis_focus",
+        ],
+        "role": "work",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 7,
+        "confidence": "medium",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "visible_expression_pattern:positive_side",
+          "preparation_analysis_focus:positive_side",
+        ],
+        "primary": [],
+        "role": "strengthInUse",
+        "secondary": [
+          "visible_expression_pattern",
+          "preparation_analysis_focus",
+        ],
+      },
+      {
+        "bridge": [
+          "visible_expression_pattern",
+        ],
+        "chapter": 8,
+        "confidence": null,
+        "coverageMode": "neutral_bridge",
+        "narrativeAngle": [
+          "visible_expression_pattern:pattern_caution_bridge",
+        ],
+        "primary": [],
+        "role": "recurringPattern",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 9,
+        "confidence": null,
+        "coverageMode": "neutral_bridge",
+        "narrativeAngle": [],
+        "primary": [],
+        "role": "past",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 10,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "current_daewoon_resource_emphasis:temporal_context",
+          "current_daewoon_peers_emphasis:temporal_context",
+          "annual_target_officer_emphasis:temporal_context",
+        ],
+        "primary": [
+          "current_daewoon_resource_emphasis",
+          "current_daewoon_peers_emphasis",
+          "annual_target_officer_emphasis",
+        ],
+        "role": "current",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 11,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "future_officer_introduced:temporal_context",
+        ],
+        "primary": [
+          "future_officer_introduced",
+        ],
+        "role": "future",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 12,
+        "confidence": "medium",
+        "coverageMode": "synthesis",
+        "narrativeAngle": [
+          "current_daewoon_resource_emphasis:synthesis",
+          "future_officer_introduced:synthesis",
+          "visible_expression_pattern:synthesis",
+          "preparation_analysis_focus:synthesis",
+        ],
+        "primary": [],
+        "role": "closing",
+        "secondary": [
+          "current_daewoon_resource_emphasis",
+          "future_officer_introduced",
+          "visible_expression_pattern",
+          "preparation_analysis_focus",
+        ],
+      },
+    ],
+    "input": "1973-01-24 13:04",
+  },
+  {
+    "chapters": [
+      {
+        "bridge": [],
+        "chapter": 1,
+        "confidence": "medium",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "resource_realization_focus:hook_preview",
+          "responsibility_structure_focus:hook_preview",
+        ],
+        "primary": [],
+        "role": "hook",
+        "secondary": [
+          "resource_realization_focus",
+          "responsibility_structure_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 2,
+        "confidence": "strong",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "resource_realization_focus:behavior",
+        ],
+        "primary": [],
+        "role": "coreIdentity",
+        "secondary": [
+          "resource_realization_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 3,
+        "confidence": "medium",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "responsibility_structure_focus:social_lens",
+        ],
+        "primary": [],
+        "role": "socialSelf",
+        "secondary": [
+          "responsibility_structure_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 4,
+        "confidence": "strong",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "resource_realization_focus:choice_lens",
+        ],
+        "primary": [],
+        "role": "privateSelf",
+        "secondary": [
+          "resource_realization_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 5,
+        "confidence": "medium",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "responsibility_structure_focus:relationship_lens",
+        ],
+        "primary": [],
+        "role": "relationship",
+        "secondary": [
+          "responsibility_structure_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 6,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "resource_realization_focus:work_lens",
+          "responsibility_structure_focus:work_lens",
+        ],
+        "primary": [
+          "resource_realization_focus",
+          "responsibility_structure_focus",
+        ],
+        "role": "work",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 7,
+        "confidence": "medium",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "resource_realization_focus:positive_side",
+          "responsibility_structure_focus:positive_side",
+        ],
+        "primary": [],
+        "role": "strengthInUse",
+        "secondary": [
+          "resource_realization_focus",
+          "responsibility_structure_focus",
+        ],
+      },
+      {
+        "bridge": [
+          "resource_realization_focus",
+        ],
+        "chapter": 8,
+        "confidence": null,
+        "coverageMode": "neutral_bridge",
+        "narrativeAngle": [
+          "resource_realization_focus:pattern_caution_bridge",
+        ],
+        "primary": [],
+        "role": "recurringPattern",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 9,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "past_peers_introduced:temporal_context",
+        ],
+        "primary": [
+          "past_peers_introduced",
+        ],
+        "role": "past",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 10,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "current_daewoon_officer_emphasis:temporal_context",
+          "current_daewoon_resource_emphasis:temporal_context",
+          "annual_target_resource_emphasis:temporal_context",
+        ],
+        "primary": [
+          "current_daewoon_officer_emphasis",
+          "current_daewoon_resource_emphasis",
+          "annual_target_resource_emphasis",
+        ],
+        "role": "current",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 11,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "future_officer_receded:temporal_context",
+        ],
+        "primary": [
+          "future_officer_receded",
+        ],
+        "role": "future",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 12,
+        "confidence": "medium",
+        "coverageMode": "synthesis",
+        "narrativeAngle": [
+          "current_daewoon_officer_emphasis:synthesis",
+          "future_officer_receded:synthesis",
+          "resource_realization_focus:synthesis",
+          "responsibility_structure_focus:synthesis",
+        ],
+        "primary": [],
+        "role": "closing",
+        "secondary": [
+          "current_daewoon_officer_emphasis",
+          "future_officer_receded",
+          "resource_realization_focus",
+          "responsibility_structure_focus",
+        ],
+      },
+    ],
+    "input": "1992-02-13 21:30",
+  },
+  {
+    "chapters": [
+      {
+        "bridge": [],
+        "chapter": 1,
+        "confidence": "strong",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "autonomy_structure_tension:hook_preview",
+        ],
+        "primary": [],
+        "role": "hook",
+        "secondary": [
+          "autonomy_structure_tension",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 2,
+        "confidence": "strong",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "autonomy_structure_tension:contrast",
+        ],
+        "primary": [
+          "autonomy_structure_tension",
+        ],
+        "role": "coreIdentity",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 3,
+        "confidence": "strong",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "responsibility_structure_focus:social_lens",
+        ],
+        "primary": [],
+        "role": "socialSelf",
+        "secondary": [
+          "responsibility_structure_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 4,
+        "confidence": "strong",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "autonomy_coordination_focus:choice_lens",
+        ],
+        "primary": [],
+        "role": "privateSelf",
+        "secondary": [
+          "autonomy_coordination_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 5,
+        "confidence": "strong",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "autonomy_coordination_focus:relationship_lens",
+        ],
+        "primary": [],
+        "role": "relationship",
+        "secondary": [
+          "autonomy_coordination_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 6,
+        "confidence": "strong",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "autonomy_coordination_focus:work_lens",
+          "responsibility_structure_focus:work_lens",
+        ],
+        "primary": [
+          "autonomy_coordination_focus",
+          "responsibility_structure_focus",
+        ],
+        "role": "work",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 7,
+        "confidence": "strong",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "autonomy_structure_tension:positive_side",
+          "autonomy_coordination_focus:positive_side",
+          "responsibility_structure_focus:positive_side",
+        ],
+        "primary": [],
+        "role": "strengthInUse",
+        "secondary": [
+          "autonomy_structure_tension",
+          "autonomy_coordination_focus",
+          "responsibility_structure_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 8,
+        "confidence": "strong",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "autonomy_structure_tension:simultaneous_tension",
+        ],
+        "primary": [],
+        "role": "recurringPattern",
+        "secondary": [
+          "autonomy_structure_tension",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 9,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "past_wealth_introduced:temporal_context",
+        ],
+        "primary": [
+          "past_wealth_introduced",
+        ],
+        "role": "past",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 10,
+        "confidence": "strong",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "current_daewoon_officer_emphasis:temporal_context",
+          "annual_target_wealth_emphasis:temporal_context",
+        ],
+        "primary": [
+          "current_daewoon_officer_emphasis",
+          "annual_target_wealth_emphasis",
+        ],
+        "role": "current",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 11,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "future_wealth_introduced:temporal_context",
+        ],
+        "primary": [
+          "future_wealth_introduced",
+        ],
+        "role": "future",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 12,
+        "confidence": "medium",
+        "coverageMode": "synthesis",
+        "narrativeAngle": [
+          "autonomy_structure_tension:synthesis",
+          "current_daewoon_officer_emphasis:synthesis",
+          "future_wealth_introduced:synthesis",
+          "autonomy_coordination_focus:synthesis",
+        ],
+        "primary": [],
+        "role": "closing",
+        "secondary": [
+          "autonomy_structure_tension",
+          "current_daewoon_officer_emphasis",
+          "future_wealth_introduced",
+          "autonomy_coordination_focus",
+        ],
+      },
+    ],
+    "input": "1973-11-13 13:04",
+  },
+  {
+    "chapters": [
+      {
+        "bridge": [],
+        "chapter": 1,
+        "confidence": "strong",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "recurring_coordination_tension:hook_preview",
+          "relationship_expression_adjustment:hook_preview",
+        ],
+        "primary": [],
+        "role": "hook",
+        "secondary": [
+          "recurring_coordination_tension",
+          "relationship_expression_adjustment",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 2,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "autonomy_coordination_focus:behavior",
+        ],
+        "primary": [],
+        "role": "coreIdentity",
+        "secondary": [
+          "autonomy_coordination_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 3,
+        "confidence": "medium",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "expression_production_focus:social_lens",
+        ],
+        "primary": [],
+        "role": "socialSelf",
+        "secondary": [
+          "expression_production_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 4,
+        "confidence": "medium",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "autonomy_coordination_focus:choice_lens",
+        ],
+        "primary": [],
+        "role": "privateSelf",
+        "secondary": [
+          "autonomy_coordination_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 5,
+        "confidence": "strong",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "relationship_expression_adjustment:relationship_lens",
+        ],
+        "primary": [
+          "relationship_expression_adjustment",
+        ],
+        "role": "relationship",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 6,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "autonomy_coordination_focus:work_lens",
+          "expression_production_focus:work_lens",
+        ],
+        "primary": [
+          "autonomy_coordination_focus",
+          "expression_production_focus",
+        ],
+        "role": "work",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 7,
+        "confidence": "medium",
+        "coverageMode": "secondary",
+        "narrativeAngle": [
+          "relationship_expression_adjustment:positive_side",
+          "autonomy_coordination_focus:positive_side",
+          "expression_production_focus:positive_side",
+        ],
+        "primary": [],
+        "role": "strengthInUse",
+        "secondary": [
+          "relationship_expression_adjustment",
+          "autonomy_coordination_focus",
+          "expression_production_focus",
+        ],
+      },
+      {
+        "bridge": [],
+        "chapter": 8,
+        "confidence": "strong",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "recurring_coordination_tension:shadow",
+        ],
+        "primary": [
+          "recurring_coordination_tension",
+        ],
+        "role": "recurringPattern",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 9,
+        "confidence": null,
+        "coverageMode": "neutral_bridge",
+        "narrativeAngle": [],
+        "primary": [],
+        "role": "past",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 10,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "current_daewoon_output_emphasis:temporal_context",
+          "current_daewoon_peers_emphasis:temporal_context",
+          "annual_target_peers_emphasis:temporal_context",
+        ],
+        "primary": [
+          "current_daewoon_output_emphasis",
+          "current_daewoon_peers_emphasis",
+          "annual_target_peers_emphasis",
+        ],
+        "role": "current",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 11,
+        "confidence": "medium",
+        "coverageMode": "primary",
+        "narrativeAngle": [
+          "future_wealth_introduced:temporal_context",
+        ],
+        "primary": [
+          "future_wealth_introduced",
+        ],
+        "role": "future",
+        "secondary": [],
+      },
+      {
+        "bridge": [],
+        "chapter": 12,
+        "confidence": "medium",
+        "coverageMode": "synthesis",
+        "narrativeAngle": [
+          "current_daewoon_output_emphasis:synthesis",
+          "future_wealth_introduced:synthesis",
+          "relationship_expression_adjustment:synthesis",
+          "autonomy_coordination_focus:synthesis",
+        ],
+        "primary": [],
+        "role": "closing",
+        "secondary": [
+          "current_daewoon_output_emphasis",
+          "future_wealth_introduced",
+          "relationship_expression_adjustment",
+          "autonomy_coordination_focus",
+        ],
+      },
+    ],
+    "input": "1984-01-24 13:04",
+  },
+]
+`;

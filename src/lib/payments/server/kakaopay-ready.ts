@@ -2,7 +2,7 @@ import 'astro:env/server'
 import { env } from 'cloudflare:workers'
 import { and, eq, sql } from 'drizzle-orm'
 import { purchases, sajuProfiles } from '../../../db/schema'
-import { buildResultReport } from '../../saju/server/result-page'
+import { buildPaidNarrativeDraft as buildResultReport } from '../../saju/server/paid-narrative-draft'
 import type { SajuInput } from '../../saju/types'
 import { findReportEntitlement, getOrCreateAnonymousBuyer } from './report-access'
 import { getPaymentConfig } from './payment-config'
@@ -133,7 +133,7 @@ export async function readyKakaoPayReport(context: Context): Promise<ReadyResult
         profileId: context.profileId, reportYear: context.reportYear, referenceAt: now.toISOString(),
         pillars: draft.pillars, daewoonNotice: draft.daewoonNotice,
       }),
-      reportSchemaVersion: 'deterministic-report-v1', methodologyVersionsJson: JSON.stringify(draft.report.methodologyVersions),
+      reportSchemaVersion: 'paid-narrative-v1', methodologyVersionsJson: JSON.stringify(draft.report.methodologyVersions),
       referenceAt: now, inputHash: await hash(JSON.stringify(input)), reportHash: await hash(draftReportJson),
       createdAt: now, updatedAt: now,
     }).onConflictDoNothing().returning({ id: purchases.id })

@@ -1,0 +1,79 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Narrative SIGNAL v1 real-chart diagnostic > keeps five distinct calculated charts auditable and selection conservative 1`] = `
+"
+1988-09-13 13:04
+  coreMetaphor: base:base_polished_metal
+  primaryTension: (empty)
+  hook: surface_support_contrast [strong, groups=2] analysis:exposure.findings.0.exposedPillars.0, natal:tenGods.day.branch, natal:tenGods.hour.branch (+14 context)
+  hookPreviews: surface_support_contrast->privateSelf
+  socialSelf: (empty)
+  privateSelf: surface_support_contrast [strong, groups=2] analysis:exposure.findings.0.exposedPillars.0, natal:tenGods.day.branch, natal:tenGods.hour.branch (+14 context)
+  relationship: (empty)
+  work: preparation_analysis_focus [strong, groups=2] analysis:exposure.findings.0.exposedPillars.0, natal:tenGods.day.branch, natal:tenGods.hour.branch (+3 context)
+  hiddenStrength: (empty)
+  recurringPattern: (empty)
+  past: past_resource_introduced [medium] 2010-08-11T21:04:00.000+09:00..2020-08-11T21:04:00.000+09:00
+  current: current_daewoon_officer_emphasis [strong] 2020-08-11T21:04:00.000+09:00..2030-08-11T21:04:00.000+09:00 | annual_target_officer_emphasis [strong] 2026-02-03T20:02:00.000Z..2027-02-04T01:46:00.000Z
+  future: future_resource_introduced [medium] 2030-08-11T21:04:00.000+09:00..2040-08-11T21:04:00.000+09:00
+
+1973-01-24 13:04
+  coreMetaphor: base:base_rough_metal
+  primaryTension: (empty)
+  hook: visible_expression_pattern [strong, groups=2] analysis:exposure.findings.3.exposedPillars.0, natal:tenGods.hour.stem, natal:tenGods.month.stem (+2 context) | preparation_analysis_focus [medium, groups=1] natal:tenGods.hour.branch, natal:tenGods.month.branch (+1 context)
+  hookPreviews: visible_expression_pattern->socialSelf, preparation_analysis_focus->work
+  socialSelf: visible_expression_pattern [strong, groups=2] analysis:exposure.findings.3.exposedPillars.0, natal:tenGods.hour.stem, natal:tenGods.month.stem (+2 context)
+  privateSelf: (empty)
+  relationship: (empty)
+  work: preparation_analysis_focus [medium, groups=1] natal:tenGods.hour.branch, natal:tenGods.month.branch (+1 context)
+  hiddenStrength: (empty)
+  recurringPattern: (empty)
+  past: (empty)
+  current: current_daewoon_resource_emphasis [medium] 2019-04-16T19:04:00.000+09:00..2029-04-16T19:04:00.000+09:00 | current_daewoon_peers_emphasis [medium] 2019-04-16T19:04:00.000+09:00..2029-04-16T19:04:00.000+09:00 | annual_target_officer_emphasis [strong] 2026-02-03T20:02:00.000Z..2027-02-04T01:46:00.000Z
+  future: future_officer_introduced [medium] 2029-04-16T19:04:00.000+09:00..2039-04-16T19:04:00.000+09:00
+
+1992-02-13 21:30
+  coreMetaphor: contextual:earth_demand_reinforced_root_observed [strong]
+  primaryTension: (empty)
+  hook: resource_realization_focus [strong, groups=2] analysis:exposure.findings.0.exposedPillars.0, natal:tenGods.hour.branch, natal:tenGods.month.stem (+2 context) | responsibility_structure_focus [medium, groups=1] natal:tenGods.hour.stem, natal:tenGods.month.branch (+2 context)
+  hookPreviews: resource_realization_focus->work, responsibility_structure_focus->work
+  socialSelf: (empty)
+  privateSelf: (empty)
+  relationship: (empty)
+  work: resource_realization_focus [strong, groups=2] analysis:exposure.findings.0.exposedPillars.0, natal:tenGods.hour.branch, natal:tenGods.month.stem (+2 context) | responsibility_structure_focus [medium, groups=1] natal:tenGods.hour.stem, natal:tenGods.month.branch (+2 context)
+  hiddenStrength: (empty)
+  recurringPattern: (empty)
+  past: past_peers_introduced [medium] 2009-01-20T17:30:00.000+09:00..2019-01-20T17:30:00.000+09:00
+  current: current_daewoon_officer_emphasis [medium] 2019-01-20T17:30:00.000+09:00..2029-01-20T17:30:00.000+09:00 | current_daewoon_resource_emphasis [medium] 2019-01-20T17:30:00.000+09:00..2029-01-20T17:30:00.000+09:00 | annual_target_resource_emphasis [strong] 2026-02-03T20:02:00.000Z..2027-02-04T01:46:00.000Z
+  future: future_officer_receded [medium] 2029-01-20T17:30:00.000+09:00..2039-01-20T17:30:00.000+09:00
+
+1973-11-13 13:04
+  coreMetaphor: base:base_rainwater
+  primaryTension: autonomy_structure_tension [strong, groups=2] analysis:exposure.findings.0.exposedPillars.0, analysis:exposure.findings.3.exposedPillars.1, natal:tenGods.day.branch, natal:tenGods.hour.branch, natal:tenGods.month.branch, natal:tenGods.year.stem (+6 context)
+  hook: autonomy_structure_tension [strong, groups=2] analysis:exposure.findings.0.exposedPillars.0, analysis:exposure.findings.3.exposedPillars.1, natal:tenGods.day.branch, natal:tenGods.hour.branch, natal:tenGods.month.branch, natal:tenGods.year.stem (+6 context)
+  hookPreviews: autonomy_structure_tension->primaryTension
+  socialSelf: (empty)
+  privateSelf: (empty)
+  relationship: (empty)
+  work: autonomy_coordination_focus [strong, groups=2] analysis:exposure.findings.3.exposedPillars.1, natal:tenGods.month.branch, natal:tenGods.year.stem (+3 context) | responsibility_structure_focus [strong, groups=2] analysis:exposure.findings.0.exposedPillars.0, natal:tenGods.day.branch, natal:tenGods.hour.branch (+3 context)
+  hiddenStrength: (empty)
+  recurringPattern: (empty)
+  past: past_wealth_introduced [medium] 2011-11-24T01:04:00.000+09:00..2021-11-24T01:04:00.000+09:00
+  current: current_daewoon_officer_emphasis [strong] 2021-11-24T01:04:00.000+09:00..2031-11-24T01:04:00.000+09:00 | annual_target_wealth_emphasis [strong] 2026-02-03T20:02:00.000Z..2027-02-04T01:46:00.000Z
+  future: future_wealth_introduced [medium] 2031-11-24T01:04:00.000+09:00..2041-11-24T01:04:00.000+09:00
+
+1984-01-24 13:04
+  coreMetaphor: contextual:fire_demand_reinforced_root_observed [strong]
+  primaryTension: (empty)
+  hook: recurring_coordination_tension [strong, groups=2] analysis:branchClashes.0, analysis:branchClashes.1, natal:tenGods.day.branch, natal:tenGods.hour.stem (+3 context) | relationship_expression_adjustment [strong, groups=2] analysis:branchClashes.0, natal:tenGods.hour.branch, natal:tenGods.month.branch (+1 context)
+  hookPreviews: recurring_coordination_tension->recurringPattern, relationship_expression_adjustment->relationship
+  socialSelf: (empty)
+  privateSelf: (empty)
+  relationship: relationship_expression_adjustment [strong, groups=2] analysis:branchClashes.0, natal:tenGods.hour.branch, natal:tenGods.month.branch (+1 context)
+  work: autonomy_coordination_focus [medium, groups=1] natal:tenGods.day.branch, natal:tenGods.hour.stem (+3 context) | expression_production_focus [medium, groups=1] natal:tenGods.hour.branch, natal:tenGods.month.branch (+1 context)
+  hiddenStrength: (empty)
+  recurringPattern: recurring_coordination_tension [strong, groups=2] analysis:branchClashes.0, analysis:branchClashes.1, natal:tenGods.day.branch, natal:tenGods.hour.stem (+3 context)
+  past: (empty)
+  current: current_daewoon_output_emphasis [medium] 2017-11-19T19:04:00.000+09:00..2027-11-19T19:04:00.000+09:00 | current_daewoon_peers_emphasis [medium] 2017-11-19T19:04:00.000+09:00..2027-11-19T19:04:00.000+09:00 | annual_target_peers_emphasis [strong] 2026-02-03T20:02:00.000Z..2027-02-04T01:46:00.000Z
+  future: future_wealth_introduced [medium] 2027-11-19T19:04:00.000+09:00..2037-11-19T19:04:00.000+09:00"
+`;

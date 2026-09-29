@@ -1,0 +1,201 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`AI Headline Writer v1 > keeps deterministic output and three existing diagnostic comparisons reproducible 1`] = `
+[
+  {
+    "input": "1988-09-13",
+    "titles": [
+      {
+        "chapter": 1,
+        "deterministic": "겉의 방식과 내부의 받침, 왜 자꾸 되돌아볼까요",
+        "mockAi": "겉으로 드러난 방식과 내부의 받침을 함, 1장의 물음은?",
+      },
+      {
+        "chapter": 2,
+        "deterministic": "준비와 분석을 함께 놓고 보면",
+        "mockAi": "내용을 충분히 살펴보고 정리하려는 방향, 2장의 물음은?",
+      },
+      {
+        "chapter": 3,
+        "deterministic": "사람들 사이에서 살펴볼 지점",
+        "mockAi": "사람들 사이에서는 어떤 모습일까?",
+      },
+      {
+        "chapter": 4,
+        "deterministic": "겉으로 드러난 것과 내부의 받침",
+        "mockAi": "겉으로 드러난 방식과 내부의 받침을 함, 4장의 물음은?",
+      },
+      {
+        "chapter": 5,
+        "deterministic": "가까운 관계를 이야기할 때",
+        "mockAi": "가까운 사이에서 살펴볼 지점은?",
+      },
+      {
+        "chapter": 6,
+        "deterministic": "일에서 드러나는 준비와 분석",
+        "mockAi": "내용을 충분히 살펴보고 정리하려는 방향, 6장의 물음은?",
+      },
+      {
+        "chapter": 7,
+        "deterministic": "겉의 방식과 내부의 받침, 잘 사용할 때의 장점",
+        "mockAi": "겉으로 드러난 방식과 내부의 받침을 함, 7장의 물음은?",
+      },
+      {
+        "chapter": 8,
+        "deterministic": "여러 방향을 함께 놓고 보면",
+        "mockAi": "반복되는 선택에는 무엇이 있을까?",
+      },
+      {
+        "chapter": 9,
+        "deterministic": "지나온 흐름에 놓였던 준비와 분석",
+        "mockAi": "내용을 살펴보고 정리하는 쪽이 새로 강, 9장의 물음은?",
+      },
+      {
+        "chapter": 10,
+        "deterministic": "2026년에 함께 살필 책임과 구조",
+        "mockAi": "맡은 역할과 기준을 정리하는 쪽이 상대, 10장의 물음은?",
+      },
+      {
+        "chapter": 11,
+        "deterministic": "다음 흐름에서 달라지는 준비와 분석",
+        "mockAi": "내용을 살펴보고 정리하는 쪽이 새로 강, 11장의 물음은?",
+      },
+      {
+        "chapter": 12,
+        "deterministic": "다시 놓고 보는 책임과 구조",
+        "mockAi": "맡은 역할과 기준을 정리하는 쪽이 상대, 12장의 물음은?",
+      },
+    ],
+  },
+  {
+    "input": "1973-11-13",
+    "titles": [
+      {
+        "chapter": 1,
+        "deterministic": "자기 기준과 맡은 역할, 왜 자꾸 되돌아볼까요",
+        "mockAi": "자기 기준과 맡은 역할의 기준을 함께 , 1장의 물음은?",
+      },
+      {
+        "chapter": 2,
+        "deterministic": "자기 기준과 맡은 역할을 함께 놓고 보면",
+        "mockAi": "자기 기준과 맡은 역할의 기준을 함께 , 2장의 물음은?",
+      },
+      {
+        "chapter": 3,
+        "deterministic": "사람들 사이에서 살펴볼 책임과 구조",
+        "mockAi": "맡은 역할과 기준을 정리하려는 방향, 3장의 물음은?",
+      },
+      {
+        "chapter": 4,
+        "deterministic": "내 기준으로 다시 보는 자기 기준과 조율",
+        "mockAi": "자기 기준을 세우면서 주변의 기준과 맞, 4장의 물음은?",
+      },
+      {
+        "chapter": 5,
+        "deterministic": "가까운 관계에서 고려할 자기 기준과 조율",
+        "mockAi": "자기 기준을 세우면서 주변의 기준과 맞, 5장의 물음은?",
+      },
+      {
+        "chapter": 6,
+        "deterministic": "일에서 드러나는 자기 기준과 조율",
+        "mockAi": "자기 기준을 세우면서 주변의 기준과 맞, 6장의 물음은?",
+      },
+      {
+        "chapter": 7,
+        "deterministic": "자기 기준과 맡은 역할, 잘 사용할 때의 장점",
+        "mockAi": "자기 기준과 맡은 역할의 기준을 함께 , 7장의 물음은?",
+      },
+      {
+        "chapter": 8,
+        "deterministic": "자기 기준과 맡은 역할이 함께 작동할 때",
+        "mockAi": "자기 기준과 맡은 역할의 기준을 함께 , 8장의 물음은?",
+      },
+      {
+        "chapter": 9,
+        "deterministic": "지나온 흐름에 놓였던 자원과 선택",
+        "mockAi": "쓸 수 있는 것을 어디에 둘지 고르는 , 9장의 물음은?",
+      },
+      {
+        "chapter": 10,
+        "deterministic": "2026년에 함께 살필 책임과 구조",
+        "mockAi": "맡은 역할과 기준을 정리하는 쪽이 상대, 10장의 물음은?",
+      },
+      {
+        "chapter": 11,
+        "deterministic": "다음 흐름에서 달라지는 자원과 선택",
+        "mockAi": "쓸 수 있는 것을 어디에 둘지 고르는 , 11장의 물음은?",
+      },
+      {
+        "chapter": 12,
+        "deterministic": "다시 놓고 보는 자기 기준과 맡은 역할",
+        "mockAi": "자기 기준과 맡은 역할의 기준을 함께 , 12장의 물음은?",
+      },
+    ],
+  },
+  {
+    "input": "1984-01-24",
+    "titles": [
+      {
+        "chapter": 1,
+        "deterministic": "반복되는 조율, 왜 자꾸 되돌아볼까요",
+        "mockAi": "서로 맞춰야 하는 지점을 되짚어보는 방, 1장의 물음은?",
+      },
+      {
+        "chapter": 2,
+        "deterministic": "자기 기준과 조율을 함께 놓고 보면",
+        "mockAi": "자기 기준을 세우면서 주변의 기준과 맞, 2장의 물음은?",
+      },
+      {
+        "chapter": 3,
+        "deterministic": "사람들 사이에서 살펴볼 표현과 생산",
+        "mockAi": "표현하려는 것을 결과물로 옮기는 방향, 3장의 물음은?",
+      },
+      {
+        "chapter": 4,
+        "deterministic": "내 기준으로 다시 보는 자기 기준과 조율",
+        "mockAi": "자기 기준을 세우면서 주변의 기준과 맞, 4장의 물음은?",
+      },
+      {
+        "chapter": 5,
+        "deterministic": "관계 속 표현, 가까운 사이의 조율",
+        "mockAi": "가까운 관계에서 표현 방식을 서로 맞추, 5장의 물음은?",
+      },
+      {
+        "chapter": 6,
+        "deterministic": "일에서 드러나는 자기 기준과 조율",
+        "mockAi": "자기 기준을 세우면서 주변의 기준과 맞, 6장의 물음은?",
+      },
+      {
+        "chapter": 7,
+        "deterministic": "관계 속 표현, 잘 사용할 때의 장점",
+        "mockAi": "가까운 관계에서 표현 방식을 서로 맞추, 7장의 물음은?",
+      },
+      {
+        "chapter": 8,
+        "deterministic": "반복되는 조율을 돌아보면",
+        "mockAi": "서로 맞춰야 하는 지점을 되짚어보는 방, 8장의 물음은?",
+      },
+      {
+        "chapter": 9,
+        "deterministic": "지나온 시간을 말할 때",
+        "mockAi": "지나온 흐름에서 살펴볼 것은?",
+      },
+      {
+        "chapter": 10,
+        "deterministic": "2026년에 함께 살필 표현과 생산",
+        "mockAi": "표현하려는 것을 밖으로 옮기는 쪽이 상, 10장의 물음은?",
+      },
+      {
+        "chapter": 11,
+        "deterministic": "다음 흐름에서 달라지는 자원과 선택",
+        "mockAi": "쓸 수 있는 것을 어디에 둘지 고르는 , 11장의 물음은?",
+      },
+      {
+        "chapter": 12,
+        "deterministic": "다시 놓고 보는 표현과 생산",
+        "mockAi": "표현하려는 것을 밖으로 옮기는 쪽이 상, 12장의 물음은?",
+      },
+    ],
+  },
+]
+`;

@@ -277,6 +277,36 @@ describe('report entitlement and snapshot access', () => {
     expect(JSON.stringify(event)).not.toMatch(/briefs|evidence|sourceRefs|birthDate|buyer|payment|prompt|raw/)
   })
 
+  it('logs only safe network metadata when fetch fails before a response', async () => {
+    const { ctx } = await narrativeFixture()
+    const log = vi.spyOn(console, 'info').mockImplementation(() => {})
+    ai.complete.mockRejectedValue(new AiTransportFailure('provider_network', undefined, undefined, {
+      errorName: 'TypeError', causeName: 'Error', isAbortError: false, timeoutTriggered: false,
+      apiKeyPresent: true, targetHost: 'api.openai.com', targetPath: '/v1/responses', method: 'POST',
+    }))
+    expect((await generatePaidReport(ctx)).status).toBe('fallback_ready')
+    const event = JSON.parse(String(log.mock.calls[0]?.[0]))
+    expect(event).toMatchObject({ event: 'paid_narrative_generation_complete', outcome: 'fallback',
+      safeFailureCode: 'provider_network', stage: 'fetch', errorName: 'TypeError', causeName: 'Error',
+      isAbortError: false, timeoutTriggered: false, apiKeyPresent: true,
+      targetHost: 'api.openai.com', targetPath: '/v1/responses', method: 'POST',
+    })
+    expect(JSON.stringify(event)).not.toMatch(/Authorization|prompt|requestBody|rawResponse|birthDate|buyer|payment/)
+  })
+
+  it('preserves the request preparation stage in the safe fallback log', async () => {
+    const { ctx } = await narrativeFixture()
+    const log = vi.spyOn(console, 'info').mockImplementation(() => {})
+    ai.complete.mockRejectedValue(new AiTransportFailure('request_build_error', undefined, undefined, {
+      errorName: 'TypeError', isAbortError: false, timeoutTriggered: false,
+      apiKeyPresent: true, targetHost: 'api.openai.com', targetPath: '/v1/responses', method: 'POST',
+    }, 'headers'))
+    expect((await generatePaidReport(ctx)).status).toBe('fallback_ready')
+    expect(JSON.parse(String(log.mock.calls[0]?.[0]))).toMatchObject({
+      safeFailureCode: 'request_build_error', stage: 'headers', errorName: 'TypeError',
+    })
+  })
+
   it('atomically consumes one attempt across simultaneous paid visits and persists fallback on AI failure', async () => {
     const { ctx, briefs } = await narrativeFixture()
     ai.complete.mockRejectedValue(new Error('provider failure'))

@@ -1,6 +1,28 @@
 import type { NarrativeJsonClient } from '../narrative/ai-writer'
 import { AiTransportFailure, PROVIDER_TIMEOUT_REASON } from '../narrative/ai-failure'
-import type { SafeProviderError } from '../narrative/ai-failure'
+import type { SafeNetworkDiagnostic, SafeProviderError } from '../narrative/ai-failure'
+
+const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses'
+const OPENAI_METHOD = 'POST'
+const SAFE_ERROR_NAMES = new Set(['Error', 'TypeError', 'AbortError', 'NetworkError', 'FetchError',
+  'DOMException', 'TimeoutError', 'SecurityError', 'NotAllowedError', 'InvalidStateError',
+  'SyntaxError', 'RangeError'])
+
+function safeErrorName(value: unknown): string | undefined {
+  if (!record(value)) return undefined
+  try { return typeof value.name === 'string' && SAFE_ERROR_NAMES.has(value.name) ? value.name : undefined }
+  catch { return undefined }
+}
+
+function safeNetworkDiagnostic(error: unknown, timeoutTriggered: boolean): SafeNetworkDiagnostic {
+  const errorName = safeErrorName(error) ?? 'UnknownError'
+  let causeName: string | undefined
+  try { causeName = record(error) ? safeErrorName(error.cause) : undefined } catch { /* No raw error details. */ }
+  return { errorName, ...(causeName ? { causeName } : {}),
+    isAbortError: errorName === 'AbortError' || causeName === 'AbortError',
+    timeoutTriggered, apiKeyPresent: true, targetHost: 'api.openai.com',
+    targetPath: '/v1/responses', method: OPENAI_METHOD }
+}
 
 function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -29,19 +51,39 @@ export function createOpenAiJsonClient(getKey: () => string | undefined): Narrat
     async complete({ model, instructions, input, maxOutputTokens, signal, jsonSchema }) {
       const key = getKey()?.trim()
       if (!key) throw new AiTransportFailure('missing_api_key')
+      let body: string
+      try {
+        body = JSON.stringify({ model, instructions, input, max_output_tokens: maxOutputTokens,
+          store: false, text: { format: jsonSchema
+            ? { type: 'json_schema', name: jsonSchema.name, schema: jsonSchema.schema, strict: true }
+            : { type: 'json_object' } } })
+      } catch (error) {
+        throw new AiTransportFailure('request_build_error', undefined, undefined,
+          safeNetworkDiagnostic(error, false), 'serialize')
+      }
+      let headers: Headers
+      try {
+        headers = new Headers({ Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' })
+      } catch (error) {
+        throw new AiTransportFailure('request_build_error', undefined, undefined,
+          safeNetworkDiagnostic(error, false), 'headers')
+      }
+      let request: Request
+      try {
+        request = new Request(OPENAI_RESPONSES_URL, {
+          method: OPENAI_METHOD, redirect: 'manual', signal, headers, body,
+        })
+      } catch (error) {
+        throw new AiTransportFailure('request_build_error', undefined, undefined,
+          safeNetworkDiagnostic(error, false), 'request_build')
+      }
       let response: Response
       try {
-        response = await fetch('https://api.openai.com/v1/responses', {
-          method: 'POST', redirect: 'error', signal,
-          headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model, instructions, input, max_output_tokens: maxOutputTokens,
-            store: false, text: { format: jsonSchema
-              ? { type: 'json_schema', name: jsonSchema.name, schema: jsonSchema.schema, strict: true }
-              : { type: 'json_object' } } }),
-        })
-      } catch {
-        throw new AiTransportFailure(signal.aborted && signal.reason === PROVIDER_TIMEOUT_REASON
-          ? 'provider_timeout' : 'provider_network')
+        response = await fetch(request)
+      } catch (error) {
+        const timeoutTriggered = signal.aborted && signal.reason === PROVIDER_TIMEOUT_REASON
+        throw new AiTransportFailure(timeoutTriggered ? 'provider_timeout' : 'provider_network',
+          undefined, undefined, timeoutTriggered ? undefined : safeNetworkDiagnostic(error, false), 'fetch')
       }
       if (!response.ok) throw new AiTransportFailure('provider_http_error', response.status,
         await readSafeProviderError(response))

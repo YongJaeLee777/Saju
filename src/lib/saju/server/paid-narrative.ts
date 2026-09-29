@@ -4,10 +4,10 @@ import { reportSnapshots } from '../../../db/schema'
 import type { loadEntitledReportSnapshot } from '../../payments/server/report-access'
 import { renderDeterministicNarrative } from '../narrative/deterministic-writer'
 import { AI_NARRATIVE_MODEL, renderAiNarrative } from '../narrative/ai-writer'
-import type { NarrativeJsonClient, NarrativeWriterChapter } from '../narrative/ai-writer'
+import type { ForbiddenContentRuleId, NarrativeChapterRejectReason, NarrativeJsonClient, NarrativeWriterChapter } from '../narrative/ai-writer'
 import type { NarrativeResponseRejectReason } from '../narrative/ai-writer'
 import { AiTransportFailure } from '../narrative/ai-failure'
-import type { AiTransportFailureCode, SafeProviderError } from '../narrative/ai-failure'
+import type { AiTransportFailureCode, AiTransportStage, SafeNetworkDiagnostic, SafeProviderError } from '../narrative/ai-failure'
 import type { ChapterWritingBrief } from '../narrative/writing-brief'
 
 const record = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v)
@@ -103,28 +103,33 @@ function writingBrief(v: unknown): v is ChapterWritingBrief {
 
 type Access = Parameters<typeof loadEntitledReportSnapshot>[0]
 type Snapshot = NonNullable<Awaited<ReturnType<typeof loadEntitledReportSnapshot>>>['snapshot']
-type DiagnosticStage = 'request' | 'provider_response' | 'response_parse' | 'validation' | 'snapshot_save'
+type DiagnosticStage = AiTransportStage | 'request' | 'provider_response' | 'response_parse' | 'validation' | 'snapshot_save'
 type SafeFailureCode = AiTransportFailureCode | NarrativeResponseRejectReason
   | 'empty-briefs' | 'input-too-large' | 'no_accepted_chapters' | 'chapter-fallback'
   | 'unexpected_error' | 'snapshot_save_failed'
 type SafeFailure = { code: SafeFailureCode; stage: DiagnosticStage; httpStatus?: number;
-  providerError?: SafeProviderError }
+  providerError?: SafeProviderError; networkDiagnostic?: SafeNetworkDiagnostic }
 const safeToken = (value: unknown) => typeof value === 'string' && value.length <= 120
   && /^[A-Za-z0-9_.\[\]-]+$/.test(value) ? value : undefined
 const transportStage = (code: AiTransportFailureCode): DiagnosticStage =>
   code === 'provider_http_error' || code === 'provider_response_schema_error' || code === 'empty_output'
-    ? 'provider_response' : code === 'response_parse_error' ? 'response_parse' : 'request'
+    ? 'provider_response' : code === 'response_parse_error' ? 'response_parse'
+      : code === 'request_build_error' ? 'request_build'
+        : code === 'provider_network' || code === 'provider_timeout' ? 'fetch' : 'request'
 function transportFailure(error: AiTransportFailure): SafeFailure {
   const providerError = error.providerError
+  const network = error.code === 'provider_network' || error.code === 'request_build_error'
+    ? error.networkDiagnostic : undefined
   const type = safeToken(providerError?.type)
   const code = safeToken(providerError?.code)
   const param = safeToken(providerError?.param)
-  return { code: error.code, stage: transportStage(error.code),
+  return { code: error.code, stage: error.stage ?? transportStage(error.code),
     ...(Number.isInteger(error.httpStatus) && error.httpStatus! >= 100 && error.httpStatus! <= 599
       ? { httpStatus: error.httpStatus } : {}),
     ...(type || code || param ? { providerError: {
       ...(type ? { type } : {}), ...(code ? { code } : {}), ...(param ? { param } : {}),
     } } : {}),
+    ...(network ? { networkDiagnostic: network } : {}),
   }
 }
 const hash = async (text: string) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',
@@ -171,6 +176,8 @@ export async function completePaidNarrativeSnapshot(context: Access, snapshot: S
   let outcome: 'ai' | 'partial_ai' | 'fallback' = 'fallback'
   let fallbackChapterCount = deterministic.length
   let validationRejectCount = 0
+  const validationRejects: { chapter: number; reason: NarrativeChapterRejectReason;
+    ruleIds?: readonly ForbiddenContentRuleId[] }[] = []
   let safeFailure: SafeFailure | undefined
   let stage: DiagnosticStage = 'request'
   let snapshotSaved = false
@@ -201,7 +208,10 @@ export async function completePaidNarrativeSnapshot(context: Access, snapshot: S
     } }
     let responseReject: NarrativeResponseRejectReason | undefined
     const result = await renderAiNarrative(briefs, observedClient, undefined,
-      () => { validationRejectCount += 1 },
+      (chapter, reason, details) => {
+        validationRejectCount += 1
+        validationRejects.push({ chapter, reason, ...(details?.ruleIds.length ? { ruleIds: [...details.ruleIds] } : {}) })
+      },
       (reason) => { responseReject = reason })
     fallbackChapterCount = result.chapters.filter((chapter) => chapter.rendererVersion !== 'ai-narrative-writer-v2').length
     if (result.mode === 'deterministic') {
@@ -234,9 +244,20 @@ export async function completePaidNarrativeSnapshot(context: Access, snapshot: S
     const diagnostic = { event: 'paid_narrative_generation_complete', outcome,
       durationMs: Math.max(0, Math.round(performance.now() - startedAt)), model: AI_NARRATIVE_MODEL,
       fallbackChapterCount, validationRejectCount, snapshotSaved,
+      ...(validationRejectCount ? { validationRejects } : {}),
       ...(safeFailure ? { safeFailureCode: safeFailure.code, stage: safeFailure.stage,
         ...(safeFailure.httpStatus !== undefined ? { httpStatus: safeFailure.httpStatus } : {}),
         ...(safeFailure.providerError ? { providerError: safeFailure.providerError } : {}),
+        ...(safeFailure.networkDiagnostic ? {
+          errorName: safeFailure.networkDiagnostic.errorName,
+          ...(safeFailure.networkDiagnostic.causeName ? { causeName: safeFailure.networkDiagnostic.causeName } : {}),
+          isAbortError: safeFailure.networkDiagnostic.isAbortError,
+          timeoutTriggered: safeFailure.networkDiagnostic.timeoutTriggered,
+          apiKeyPresent: safeFailure.networkDiagnostic.apiKeyPresent,
+          targetHost: safeFailure.networkDiagnostic.targetHost,
+          targetPath: safeFailure.networkDiagnostic.targetPath,
+          method: safeFailure.networkDiagnostic.method,
+        } : {}),
       } : {}),
     }
     try { console.info(JSON.stringify(diagnostic)) } catch { /* Logging must not change report delivery. */ }

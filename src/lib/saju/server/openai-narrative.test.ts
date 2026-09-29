@@ -26,9 +26,15 @@ describe('server-only narrative Responses adapter', () => {
       text: '{"chapters":[]}', usage: { inputTokens: 10, outputTokens: 20 },
     })
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    const [url, init] = fetchMock.mock.calls[0]
-    expect(url).toBe('https://api.openai.com/v1/responses')
-    expect(JSON.parse(String(init?.body))).toMatchObject({ model: 'test-model',
+    const [outbound, init] = fetchMock.mock.calls[0]
+    expect(init).toBeUndefined()
+    if (!(outbound instanceof Request)) throw new Error('Expected a Request instance')
+    expect(outbound.url).toBe('https://api.openai.com/v1/responses')
+    expect(outbound.method).toBe('POST')
+    expect(outbound.redirect).toBe('manual')
+    expect(outbound.headers.has('Authorization')).toBe(true)
+    expect(outbound.headers.get('Content-Type')).toBe('application/json')
+    expect(JSON.parse(await outbound.clone().text())).toMatchObject({ model: 'test-model',
       instructions: 'editing policy', input: '{"chapters":[]}', max_output_tokens: 100,
       store: false, text: { format: { type: 'json_object' } } })
   })
@@ -40,7 +46,9 @@ describe('server-only narrative Responses adapter', () => {
     const schema = { type: 'object', properties: { chapters: { type: 'array',
       items: { type: 'string' } } }, required: ['chapters'], additionalProperties: false }
     await openAiNarrativeClient.complete({ ...request(), jsonSchema: { name: 'headlines_v1', schema } })
-    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body))
+    const outbound = fetchMock.mock.calls[0][0]
+    if (!(outbound instanceof Request)) throw new Error('Expected a Request instance')
+    const body = JSON.parse(await outbound.clone().text())
     expect(body).toEqual({ model: 'test-model', instructions: 'editing policy',
       input: '{"chapters":[]}', max_output_tokens: 100, store: false,
       text: { format: { type: 'json_schema', name: 'headlines_v1', schema, strict: true } } })
@@ -53,7 +61,9 @@ describe('server-only narrative Responses adapter', () => {
       output: [{ type: 'message', role: 'assistant', status: 'completed',
         content: [{ type: 'output_text', text: '{"chapters":[]}' }] }] }))
     await openAiNarrativeClient.complete({ ...request(), jsonSchema: AI_NARRATIVE_RESPONSE_SCHEMA })
-    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body))
+    const outbound = fetchMock.mock.calls[0][0]
+    if (!(outbound instanceof Request)) throw new Error('Expected a Request instance')
+    const body = JSON.parse(await outbound.clone().text())
     expect(body).toEqual({ model: 'test-model', instructions: 'editing policy',
       input: '{"chapters":[]}', max_output_tokens: 100, store: false,
       text: { format: { type: 'json_schema', name: 'saju_narrative_v2',
@@ -71,7 +81,12 @@ describe('server-only narrative Responses adapter', () => {
     await expect(openAiNarrativeClient.complete(request())).rejects.toMatchObject({
       code: 'provider_http_error', httpStatus: 503,
     })
-    expect(fetchMock).toHaveBeenCalledTimes(1)
+    fetchMock.mockResolvedValueOnce(new Response('', { status: 302,
+      headers: { Location: 'https://example.com/' } }))
+    await expect(openAiNarrativeClient.complete(request())).rejects.toMatchObject({
+      code: 'provider_http_error', httpStatus: 302,
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
   it('extracts only safe provider error type/code/param on HTTP 400', async () => {
@@ -90,8 +105,14 @@ describe('server-only narrative Responses adapter', () => {
   })
 
   it('classifies transport and envelope failures without exposing response contents', async () => {
-    fetchMock.mockRejectedValueOnce(new Error('private network details'))
-    await expect(openAiNarrativeClient.complete(request())).rejects.toMatchObject({ code: 'provider_network' })
+    fetchMock.mockRejectedValueOnce(Object.assign(new TypeError('private network details'),
+      { cause: new Error('private cause details') }))
+    const network = await openAiNarrativeClient.complete(request()).catch((error: unknown) => error)
+    expect(network).toMatchObject({ code: 'provider_network', stage: 'fetch', networkDiagnostic: {
+      errorName: 'TypeError', causeName: 'Error', isAbortError: false, timeoutTriggered: false,
+      apiKeyPresent: true, targetHost: 'api.openai.com', targetPath: '/v1/responses', method: 'POST',
+    } })
+    expect(JSON.stringify(network)).not.toMatch(/private|Authorization|mock-secret|chapters/)
     fetchMock.mockResolvedValueOnce(new Response('not json', { status: 200 }))
     await expect(openAiNarrativeClient.complete(request())).rejects.toMatchObject({ code: 'response_parse_error' })
     fetchMock.mockResolvedValueOnce(Response.json({ status: 'incomplete', output: [] }))
@@ -107,15 +128,40 @@ describe('server-only narrative Responses adapter', () => {
     vi.useFakeTimers()
     try {
       const controller = new AbortController()
-      fetchMock.mockImplementationOnce((_url, init) => new Promise<Response>((_resolve, reject) => {
-        init?.signal?.addEventListener('abort', () => reject(new Error('simulated fetch abort')))
+      fetchMock.mockImplementationOnce((outbound) => new Promise<Response>((_resolve, reject) => {
+        if (!(outbound instanceof Request)) throw new Error('Expected a Request instance')
+        outbound.signal.addEventListener('abort', () => reject(new Error('simulated fetch abort')))
       }))
       const pending = openAiNarrativeClient.complete({ ...request(), signal: controller.signal })
-      const failure = expect(pending).rejects.toMatchObject({ code: 'provider_timeout' })
+      const failure = expect(pending).rejects.toMatchObject({ code: 'provider_timeout', stage: 'fetch' })
       setTimeout(() => controller.abort('provider_timeout'), 20)
       await vi.advanceTimersByTimeAsync(20)
       await failure
       expect(fetchMock).toHaveBeenCalledTimes(1)
     } finally { vi.useRealTimers() }
+  })
+
+  it('separates serialization, header, and Request construction errors before fetch', async () => {
+    const serialization = await openAiNarrativeClient.complete({ ...request(),
+      jsonSchema: { name: 'test', schema: { invalid: BigInt(1) } },
+    }).catch((error: unknown) => error)
+    expect(serialization).toMatchObject({ code: 'request_build_error', stage: 'serialize',
+      networkDiagnostic: { errorName: 'TypeError' } })
+    expect(fetchMock).not.toHaveBeenCalled()
+
+    const NativeHeaders = globalThis.Headers
+    vi.stubGlobal('Headers', class { constructor() { throw new TypeError('private header detail') } })
+    const headers = await openAiNarrativeClient.complete(request()).catch((error: unknown) => error)
+    expect(headers).toMatchObject({ code: 'request_build_error', stage: 'headers',
+      networkDiagnostic: { errorName: 'TypeError' } })
+    expect(fetchMock).not.toHaveBeenCalled()
+
+    vi.stubGlobal('Headers', NativeHeaders)
+    vi.stubGlobal('Request', class { constructor() { throw new TypeError('private request detail') } })
+    const requestBuild = await openAiNarrativeClient.complete(request()).catch((error: unknown) => error)
+    expect(requestBuild).toMatchObject({ code: 'request_build_error', stage: 'request_build',
+      networkDiagnostic: { errorName: 'TypeError' } })
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(JSON.stringify(requestBuild)).not.toMatch(/private|mock-secret|Authorization/)
   })
 })

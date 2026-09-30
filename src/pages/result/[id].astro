@@ -19,6 +19,7 @@ if (!id) {
 const db = createDb(env.saju_db)
 const profiles = await db
   .select({
+    displayName: sajuProfiles.displayName,
     birthDate: sajuProfiles.birthDate,
     birthTime: sajuProfiles.birthTime,
     gender: sajuProfiles.gender,
@@ -73,6 +74,7 @@ const chapterAnimals = [
       <header class="page-header">
         <p class="eyebrow">나의 사주</p>
         <h1>사주와 운의 흐름</h1>
+        {profile.displayName && <p>{profile.displayName}님의 사주 이야기</p>}
         <p>태어난 날의 사주와 현재 대운, 2026년 세운을 함께 살펴보세요.</p>
       </header>
       <section class="panel" aria-labelledby="pillars-heading">

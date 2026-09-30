@@ -49,6 +49,29 @@ const client = (value: unknown): NarrativeJsonClient => ({ complete: vi.fn().moc
 }) })
 
 describe('AI Narrative Writer v2', () => {
+  it('keeps name personalization outside analytical facts, plan, briefs and source allocation', () => {
+    const { context, plan, briefs } = fixture()
+    const before = structuredClone({ context, plan, briefs })
+    const unnamed = buildAiNarrativeRequest(briefs)
+    const named = buildAiNarrativeRequest(briefs, '  용재7  ')
+    expect(JSON.parse(named.input)).toEqual({ ...JSON.parse(unnamed.input), displayName: '용재7' })
+    expect(named.claimAliases).toEqual(unnamed.claimAliases)
+    expect(named.evidenceAliases).toEqual(unnamed.evidenceAliases)
+    expect(named.motifAliases).toEqual(unnamed.motifAliases)
+    expect({ context, plan, briefs }).toEqual(before)
+    expect(named.instructions).toContain('{displayName}님')
+    expect(named.instructions).toContain('3~5회를 반드시 채우지 마세요')
+    expect(named.instructions).toContain('자연스럽다면 2~4회도 좋고')
+  })
+
+  it.each([undefined, '', '   '])('omits absent names from Writer input and preserves nameless output', async (name) => {
+    const { briefs } = fixture()
+    const mock = client(response(briefs))
+    const result = await renderAiNarrative(briefs, mock, name)
+    const request = vi.mocked(mock.complete).mock.calls[0][0]
+    expect(JSON.parse(request.input)).not.toHaveProperty('displayName')
+    expect(JSON.stringify(result.chapters)).not.toMatch(/undefined님|null님/)
+  })
   it('reports existing Brief prohibition IDs without changing their matches', () => {
     const base = fixture().briefs[8]
     const cases = [
@@ -117,10 +140,12 @@ describe('AI Narrative Writer v2', () => {
     expect(forbiddenContentRuleIds(past, '반드시 실제로 이직했어요.', refs))
       .toEqual(expect.arrayContaining(['actual_past_event', 'certainty_assertion']))
   })
-  it('keeps v3 prose, short bridge, repetition and closing rules in the production request', () => {
+  it('keeps conversational tone, short bridge, repetition and closing rules in the production request', () => {
     const { briefs } = fixture()
     const instructions = buildAiNarrativeRequest(briefs).instructions
-    expect(instructions).toContain('자연스러운 해요체')
+    expect(instructions).toContain('차분하고 예의 있는 반말')
+    expect(instructions).toContain('한 번의 긴 대화')
+    expect(instructions).toContain('현재 장에 배정되지 않은 claim·motif·source refs를 가져오거나 원인 관계를 만들지 마세요')
     expect(instructions).toContain('준비와 분석')
     expect(instructions).toContain('최종 제목과 본문은')
     expect(instructions).toContain('메타 문구를 반복하지 말고')

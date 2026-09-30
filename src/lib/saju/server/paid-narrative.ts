@@ -1,6 +1,7 @@
 import 'astro:env/server'
 import { and, eq } from 'drizzle-orm'
-import { reportSnapshots } from '../../../db/schema'
+import { reportSnapshots, sajuProfiles } from '../../../db/schema'
+import { normalizeDisplayName } from '../display-name'
 import type { loadEntitledReportSnapshot } from '../../payments/server/report-access'
 import { renderDeterministicNarrative } from '../narrative/deterministic-writer'
 import { AI_NARRATIVE_MODEL, renderAiNarrative } from '../narrative/ai-writer'
@@ -198,6 +199,10 @@ export async function completePaidNarrativeSnapshot(context: Access, snapshot: S
       stage = 'snapshot_save'
       return await saveFallback()
     }
+    // Presentation data is read only by the authorized CAS owner, never used in analysis.
+    const [profile] = await context.db.select({ displayName: sajuProfiles.displayName }).from(sajuProfiles)
+      .where(eq(sajuProfiles.id, snapshot.profileId)).limit(1)
+    const displayName = normalizeDisplayName(profile?.displayName) ?? undefined
     const client = await getClient()
     const observedClient: NarrativeJsonClient = { async complete(request) {
       try { return await client.complete(request) }
@@ -207,7 +212,7 @@ export async function completePaidNarrativeSnapshot(context: Access, snapshot: S
       }
     } }
     let responseReject: NarrativeResponseRejectReason | undefined
-    const result = await renderAiNarrative(briefs, observedClient, undefined,
+    const result = await renderAiNarrative(briefs, observedClient, displayName,
       (chapter, reason, details) => {
         validationRejectCount += 1
         validationRejects.push({ chapter, reason, ...(details?.ruleIds.length ? { ruleIds: [...details.ruleIds] } : {}) })

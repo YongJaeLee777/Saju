@@ -3,6 +3,7 @@ import type { APIRoute } from 'astro'
 import { env } from 'cloudflare:workers'
 
 import { createDb } from '../../../db/client'
+import { normalizeDisplayName } from '../../../lib/saju/display-name'
 import { sajuProfiles } from '../../../db/schema'
 import { prepareAnonymousBuyerRateLimit } from '../../../lib/payments/server/report-access'
 
@@ -25,6 +26,10 @@ export const POST = (async ({ request, cookies }: RouteContext): Promise<Respons
     }
 
     const { birthDate, gender, calendarType } = body
+    const displayName = normalizeDisplayName('displayName' in body ? body.displayName : undefined)
+    if (displayName === undefined) {
+      return Response.json({ message: '이름은 30자 이내의 이름 또는 닉네임으로 입력해주세요.' }, { status: 400, headers })
+    }
     const birthTime = 'birthTime' in body ? body.birthTime : null
     const isLeapMonth = 'isLeapMonth' in body ? body.isLeapMonth : false
 
@@ -94,6 +99,7 @@ export const POST = (async ({ request, cookies }: RouteContext): Promise<Respons
       userId: null,
 
       birthDate,
+      displayName,
       birthTime: birthTime || null,
       gender,
       calendarType,
@@ -105,6 +111,7 @@ export const POST = (async ({ request, cookies }: RouteContext): Promise<Respons
 
     return Response.json({
       profileId,
+      displayName,
     }, { headers })
   } catch {
 

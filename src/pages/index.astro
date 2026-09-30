@@ -25,6 +25,12 @@
           <p>기본 정보로 나의 사주를 확인해요.</p>
         </div>
         <div class="field-grid">
+          <div class="field">
+            <label for="displayName">이름 <span class="optional">선택</span></label>
+            <input id="displayName" name="displayName" type="text" maxlength="30" placeholder="예: 용재"
+              aria-describedby="display-name-help" />
+            <p id="display-name-help" class="field-help">이름이나 닉네임을 입력하면 유료 이야기에서 자연스럽게 불러드려요.</p>
+          </div>
         <div class="field">
           <label for="birthDate">생년월일</label>
           <input
@@ -102,6 +108,7 @@
         const formData = new FormData(form)
 
         const body = {
+          displayName: String(formData.get('displayName') ?? '').trim(),
           birthDate: formData.get('birthDate'),
           birthTime: formData.get('birthTime') || null,
           gender: formData.get('gender'),

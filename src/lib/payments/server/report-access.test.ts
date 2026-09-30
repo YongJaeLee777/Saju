@@ -225,12 +225,17 @@ describe('report entitlement and snapshot access', () => {
 
   it('makes one authorized narrative request, stores projected chapters and reuses them on later visits', async () => {
     const { ctx, briefs } = await narrativeFixture()
+    await db.update(sajuProfiles).set({ displayName: '용재' }).where(eq(sajuProfiles.id, ctx.profileId))
+    const [profile] = await db.select({ displayName: sajuProfiles.displayName }).from(sajuProfiles)
+      .where(eq(sajuProfiles.id, ctx.profileId)).limit(1)
+    expect(profile.displayName).toBe('용재')
     const log = vi.spyOn(console, 'info').mockImplementation(() => {})
     expect(briefs.map((brief) => brief.chapter)).toEqual(Array.from({ length: 12 }, (_, i) => i + 1))
     expect(buildAiNarrativeRequest(briefs).input.length).toBeLessThan(50_000)
     ai.complete.mockImplementation(async (request) => {
       const input = JSON.parse(request.input)
       expect(input.chapters).toHaveLength(briefs.length)
+      expect(input.displayName).toBe('용재')
       expect(request.input).not.toMatch(/buyer|payment|birthDate|birthTime/)
       const motif = input.chapters.find((chapter: { chapter: number }) => chapter.chapter === 2).motifRef
       const sourceRefs = [{ kind: 'motif', code: motif.code }]
@@ -247,12 +252,13 @@ describe('report entitlement and snapshot access', () => {
     expect(result.report?.sections).toHaveLength(12)
     expect(result.report?.sections.some((section) => section.headline === '이미지에서 시작하는 나의 이야기')).toBe(true)
     expect(log).toHaveBeenCalledTimes(1)
+    expect(JSON.stringify(log.mock.calls)).not.toContain('용재')
     expect(JSON.parse(String(log.mock.calls[0]?.[0]))).toMatchObject({
       event: 'paid_narrative_generation_complete', outcome: 'partial_ai', model: 'gpt-5.6-luna',
       fallbackChapterCount: 11, validationRejectCount: 0, snapshotSaved: true,
     })
     expect(JSON.stringify(result)).not.toMatch(/paidNarrative|sourceRefs|evidence|allowedPoints|buyer|snapshot/)
-    await db.update(sajuProfiles).set({ birthDate: '2000-01-01' })
+    await db.update(sajuProfiles).set({ birthDate: '2000-01-01', displayName: '다른이름' })
     expect(await loadPaidReport(ctx)).toEqual(result)
     expect(ai.complete).toHaveBeenCalledTimes(1)
     const [stored] = await db.select().from(reportSnapshots)
@@ -263,8 +269,11 @@ describe('report entitlement and snapshot access', () => {
   it('logs only allowlisted provider failure fields for a paid fallback', async () => {
     const { ctx } = await narrativeFixture()
     const log = vi.spyOn(console, 'info').mockImplementation(() => {})
-    ai.complete.mockRejectedValue(new AiTransportFailure('provider_http_error', 400,
-      { type: 'invalid_request_error', code: 'invalid_json_schema', param: 'text.format.schema' }))
+    ai.complete.mockImplementation(async (request) => {
+      expect(JSON.parse(request.input)).not.toHaveProperty('displayName')
+      throw new AiTransportFailure('provider_http_error', 400,
+        { type: 'invalid_request_error', code: 'invalid_json_schema', param: 'text.format.schema' })
+    })
     const result = await generatePaidReport(ctx)
     expect(result.status).toBe('fallback_ready')
     expect(log).toHaveBeenCalledTimes(1)

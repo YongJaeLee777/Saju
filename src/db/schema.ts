@@ -47,6 +47,7 @@ export const sajuProfiles = sqliteTable(
   {
     id: text('id').primaryKey(),
     userId: text('user_id').references(() => users.id),
+    displayName: text('display_name'),
     birthDate: text('birth_date').notNull(),
     birthTime: text('birth_time'),
     gender: text('gender'),

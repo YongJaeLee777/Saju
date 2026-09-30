@@ -19,9 +19,9 @@ vi.mock('./kakaopay-ready', () => ({ readyKakaoPayReport: vi.fn() }))
 
 const cookies = { get: vi.fn(), set: vi.fn() }
 const profileId = 'de305d54-75b4-431b-adb2-eb6b9e546014'
-const profileRequest = () => new Request('https://saju.example/api/saju/profile', {
+const profileRequest = (displayName?: unknown) => new Request('https://saju.example/api/saju/profile', {
   method: 'POST', headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ birthDate: '1991-01-02', gender: 'female', calendarType: 'solar' }),
+  body: JSON.stringify({ birthDate: '1991-01-02', gender: 'female', calendarType: 'solar', displayName }),
 })
 const readyRequest = () => new Request('https://saju.example/api/payments/kakaopay/ready', {
   method: 'POST', headers: { Origin: 'https://saju.example', 'Content-Type': 'application/json' },
@@ -39,6 +39,22 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals() })
 
 describe('anonymous buyer rate limits', () => {
+  it.each([[undefined, null], [null, null], ['  ', null], ['  용재7  ', '용재7']])(
+    'stores optional displayName %s independently of birth input', async (name, expected) => {
+      profileLimit.mockResolvedValue({ success: true })
+      const response = await profilePost({ request: profileRequest(name), cookies })
+      expect(response.status).toBe(200)
+      expect(insertValues).toHaveBeenCalledWith(expect.objectContaining({
+        displayName: expected, birthDate: '1991-01-02', gender: 'female', calendarType: 'solar',
+      }))
+      expect(await response.json()).toMatchObject({ displayName: expected })
+    })
+
+  it.each(['가'.repeat(31), '이름\n', '이\u200b름', '<script>', 42])(
+    'rejects invalid displayName before storage', async (name) => {
+      expect((await profilePost({ request: profileRequest(name), cookies })).status).toBe(400)
+      expect(insertValues).not.toHaveBeenCalled()
+    })
   it('does not issue a first-visit buyer cookie or touch D1 when blocked', async () => {
     const issueBuyer = vi.fn()
     vi.mocked(prepareAnonymousBuyerRateLimit).mockResolvedValue({ key: 'a'.repeat(64), issueBuyer })
